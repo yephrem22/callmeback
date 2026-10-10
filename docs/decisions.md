@@ -9,6 +9,7 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 - Spec 003 phase 1 landed on main 2026-10-10 (contracts frozen; 311 tests).
 - Spec Kit 1.1.3, Python 3.12 (uv-managed), Node 22 installed on A's laptop at kickoff.
 - Constitution v1.0.0 ratified 2026-10-10.
+- Spec 001 (B): `requirements.txt` gained `twilio`, `boto3`, `bcrypt` (agreed with A); `.gitignore` is B-maintained with A's entries preserved; scripts run as modules (`make secrets` → `python -m scripts.gen_secrets`). `make check-env`, `make secrets`, `make test` are the shared entry points.
 
 ## Organizers (A)
 
