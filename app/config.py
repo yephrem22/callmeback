@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _bool(name: str, default: str) -> bool:
-    return os.environ.get(name, default).strip() in {"1", "true", "True", "yes"}
+    return os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _int(name: str, default: str) -> int:

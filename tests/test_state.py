@@ -66,6 +66,54 @@ def test_every_illegal_transition_raises(db, frm, to):
     assert _audit_count(db, iid) == 0
 
 
+HELD_ILLEGAL = [(f, r) for f in ALL for r in HoldReason
+                if r not in HOLD_REASONS_FROM.get(f, set()) and f is not Status.HELD]
+
+
+@pytest.mark.parametrize("frm,reason", HELD_ILLEGAL, ids=[f"{f}->HELD({r})" for f, r in HELD_ILLEGAL])
+def test_every_illegal_hold_raises(db, frm, reason):
+    iid = _invoice(db, frm)
+    with pytest.raises(IllegalTransition):
+        transition(iid, Status.HELD, hold_reason=reason, actor="policy")
+    assert repo.get_invoice(db, iid)["status"] == frm.value
+    assert _audit_count(db, iid) == 0
+
+
+def test_held_to_held_with_different_reason_is_illegal(db):
+    iid = _invoice(db, Status.HELD, HoldReason.NO_ANSWER)
+    with pytest.raises(IllegalTransition):
+        transition(iid, Status.HELD, hold_reason=HoldReason.AGENT_HOLD, actor="policy")
+    assert transition(iid, Status.HELD, hold_reason=HoldReason.NO_ANSWER, actor="policy") is False
+
+
+def test_bad_status_string_raises_illegal_transition(db):
+    iid = _invoice(db, Status.RECEIVED)
+    with pytest.raises(IllegalTransition):
+        transition(iid, "CONFIRMD", actor="system")
+    with pytest.raises(IllegalTransition):
+        transition(iid, Status.HELD, hold_reason="NOPE", actor="system")
+
+
+def test_transition_with_autocommit_connection_is_still_atomic(db):
+    """A failing audit write must roll back the status change (§7.3)."""
+    iid = _invoice(db, Status.RECEIVED)
+    assert not db.in_transaction
+    with pytest.raises(ValueError):
+        transition(iid, Status.EXTRACTED, actor="not-an-actor", conn=db)
+    assert repo.get_invoice(db, iid)["status"] == "RECEIVED"
+    assert _audit_count(db, iid) == 0
+    assert not db.in_transaction
+
+
+def test_transition_joins_callers_transaction(db):
+    from app.db import tx
+    iid = _invoice(db, Status.RECEIVED)
+    with tx(db):
+        assert transition(iid, Status.EXTRACTED, actor="system", conn=db) is True
+        assert db.in_transaction
+    assert repo.get_invoice(db, iid)["status"] == "EXTRACTED"
+
+
 def test_repeat_is_noop_returning_false(db):
     iid = _invoice(db, Status.RECEIVED)
     assert transition(iid, Status.EXTRACTED, actor="system") is True

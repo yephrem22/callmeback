@@ -97,15 +97,21 @@ def transition(invoice_id: str, to: Status | str, *, hold_reason: HoldReason | s
     Raises IllegalTransition otherwise.
     HELD requires hold_reason, and hold_reason must be allowed for the from-state.
     The UPDATE and its audit event commit in one `BEGIN IMMEDIATE` transaction."""
-    to = Status(to)
-    reason = HoldReason(hold_reason) if hold_reason is not None else None
+    try:
+        to = Status(to)
+        reason = HoldReason(hold_reason) if hold_reason is not None else None
+    except ValueError as e:
+        raise IllegalTransition(str(e)) from e
     if to is S.HELD and reason is None:
         raise IllegalTransition("HELD requires a hold_reason")
     if to is not S.HELD and reason is not None:
         raise IllegalTransition(f"hold_reason only applies to HELD, not {to}")
 
-    own = conn is None
+    # We manage the transaction unless the caller already opened one, so the
+    # UPDATE and its audit event always commit together (PLAN.md §7.3).
+    close = conn is None
     c = conn or db.connect()
+    own = close or not c.in_transaction
     try:
         if own:
             c.execute("BEGIN IMMEDIATE")
@@ -145,5 +151,5 @@ def transition(invoice_id: str, to: Status | str, *, hold_reason: HoldReason | s
             c.execute("ROLLBACK")
         raise
     finally:
-        if own:
+        if close:
             c.close()

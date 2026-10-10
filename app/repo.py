@@ -13,6 +13,23 @@ JSON_COLUMNS = {"domains", "extraction", "risk", "analyst", "memo", "review", "e
                 "account_ref", "signals", "callback_target", "source_refs"}
 
 
+_COLUMNS: dict[str, frozenset[str]] = {}
+
+
+def columns(conn: sqlite3.Connection, table: str) -> frozenset[str]:
+    """Column allowlist from the schema, cached per table; keyword arguments
+    are checked against it before they are interpolated into SQL."""
+    if table not in _COLUMNS:
+        _COLUMNS[table] = frozenset(r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall())
+    return _COLUMNS[table]
+
+
+def _check_columns(conn: sqlite3.Connection, table: str, keys: Any) -> None:
+    bad = set(keys) - columns(conn, table)
+    if bad:
+        raise ValueError(f"unknown {table} column(s): {sorted(bad)}")
+
+
 def _encode(key: str, value: Any) -> Any:
     if key in JSON_COLUMNS and not isinstance(value, (str, type(None))):
         return json.dumps(value, sort_keys=True)
@@ -74,6 +91,7 @@ def insert_invoice(conn: sqlite3.Connection, **cols: Any) -> str:
     cols.setdefault("version", 0)
     cols.setdefault("ai_fallback", 0)
     keys = list(cols)
+    _check_columns(conn, "invoices", keys)
     conn.execute(
         f"INSERT INTO invoices ({', '.join(keys)}) VALUES ({', '.join('?' for _ in keys)})",
         [_encode(k, cols[k]) for k in keys],
@@ -89,6 +107,7 @@ def update_invoice(conn: sqlite3.Connection, invoice_id: str, **cols: Any) -> No
     if not cols:
         return
     cols["updated_at"] = now_iso()
+    _check_columns(conn, "invoices", cols)
     sets = ", ".join(f"{k}=?" for k in cols)
     conn.execute(f"UPDATE invoices SET {sets} WHERE id=?",
                  [_encode(k, v) for k, v in cols.items()] + [invoice_id])
@@ -97,15 +116,15 @@ def update_invoice(conn: sqlite3.Connection, invoice_id: str, **cols: Any) -> No
 def list_invoices(conn: sqlite3.Connection) -> list[dict]:
     """Queue rows, newest first (PLAN.md §7.6 GET /api/invoices)."""
     out = []
-    for r in conn.execute("SELECT * FROM invoices ORDER BY created_at DESC, rowid DESC").fetchall():
+    rows = conn.execute(
+        "SELECT i.*, v.name AS _vendor_name FROM invoices i LEFT JOIN vendors v ON v.id = i.vendor_id "
+        "ORDER BY i.created_at DESC, i.rowid DESC").fetchall()
+    for r in rows:
         inv = row_to_dict(r)
         risk = inv.get("risk") or {}
         ext = inv.get("extraction") or {}
         amount_cents = risk.get("amount_cents")
-        vendor_name = None
-        if inv.get("vendor_id"):
-            v = get_vendor(conn, inv["vendor_id"])
-            vendor_name = v["name"] if v else None
+        vendor_name = inv.pop("_vendor_name", None)
         if not vendor_name:
             vendor_name = ((ext.get("vendor_name") or {}).get("value")) or inv.get("from_name")
         out.append({
