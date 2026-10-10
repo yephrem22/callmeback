@@ -1,0 +1,17 @@
+{
+  "db": true,
+  "model": {
+    "ok": false,
+    "latency_ms": null,
+    "checked_at": null
+  },
+  "twilio": {
+    "configured": false
+  },
+  "storage": {
+    "ok": true
+  },
+  "demo_mode": true,
+  "ai_mode": "off",
+  "deploy_label": "Akamai Cloud, Chicago (us-ord)"
+}

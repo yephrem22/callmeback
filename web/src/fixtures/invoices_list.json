@@ -1,0 +1,57 @@
+[
+  {
+    "id": "inv_fixture10",
+    "created_at": "2026-10-10T15:01:58Z",
+    "vendor_name": "Northwind Industrial Parts",
+    "amount_display": "$7,300.00",
+    "tier": "RED",
+    "points": 60,
+    "status": "HELD",
+    "hold_reason": "UNKNOWN_VENDOR",
+    "source": "sample"
+  },
+  {
+    "id": "inv_fixture08",
+    "created_at": "2026-10-10T15:01:35Z",
+    "vendor_name": "Prairie Cloud Hosting",
+    "amount_display": "$5,240.00",
+    "tier": "YELLOW",
+    "points": 25,
+    "status": "RELEASED",
+    "hold_reason": null,
+    "source": "sample"
+  },
+  {
+    "id": "inv_fixture05",
+    "created_at": "2026-10-10T15:00:54Z",
+    "vendor_name": "Heartland Logistics LLC",
+    "amount_display": "$4,120.00",
+    "tier": "RED",
+    "points": 50,
+    "status": "RELEASED",
+    "hold_reason": null,
+    "source": "sample"
+  },
+  {
+    "id": "inv_fixture03",
+    "created_at": "2026-10-10T15:00:21Z",
+    "vendor_name": "Acme Supply Co.",
+    "amount_display": "$48,750.00",
+    "tier": "RED",
+    "points": 160,
+    "status": "HELD",
+    "hold_reason": "DENIED_BY_VENDOR",
+    "source": "sample"
+  },
+  {
+    "id": "inv_fixture01",
+    "created_at": "2026-10-10T15:00:03Z",
+    "vendor_name": "Acme Supply Co.",
+    "amount_display": "$12,150.00",
+    "tier": "GREEN",
+    "points": 0,
+    "status": "RELEASED",
+    "hold_reason": null,
+    "source": "sample"
+  }
+]

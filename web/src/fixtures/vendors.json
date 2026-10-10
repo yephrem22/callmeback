@@ -1,0 +1,152 @@
+[
+  {
+    "id": "ven_acme",
+    "name": "Acme Supply Co.",
+    "domains": [
+      "acme-supply.com"
+    ],
+    "phone_masked": "•••-•••-0199",
+    "bank_masked": "Plains Federal Bank ••••4821",
+    "history": [
+      {
+        "invoice_number": "INV-20301",
+        "amount_cents": 1182000,
+        "paid_on": "2026-04-15"
+      },
+      {
+        "invoice_number": "INV-20322",
+        "amount_cents": 1204000,
+        "paid_on": "2026-05-15"
+      },
+      {
+        "invoice_number": "INV-20355",
+        "amount_cents": 1196000,
+        "paid_on": "2026-06-15"
+      },
+      {
+        "invoice_number": "INV-20381",
+        "amount_cents": 1231000,
+        "paid_on": "2026-07-15"
+      },
+      {
+        "invoice_number": "INV-20398",
+        "amount_cents": 1200000,
+        "paid_on": "2026-08-15"
+      },
+      {
+        "invoice_number": "INV-20412",
+        "amount_cents": 1215000,
+        "paid_on": "2026-09-15"
+      }
+    ],
+    "median_cents": 1202000,
+    "routing": "123456780",
+    "bank_name": "Plains Federal Bank",
+    "account_masked": "••••4821",
+    "bank_history": []
+  },
+  {
+    "id": "ven_heartland",
+    "name": "Heartland Logistics LLC",
+    "domains": [
+      "heartland-logistics.com"
+    ],
+    "phone_masked": "•••-•••-0199",
+    "bank_masked": "Gateway National Bank ••••4455",
+    "history": [
+      {
+        "invoice_number": "HL-8701",
+        "amount_cents": 395000,
+        "paid_on": "2026-04-15"
+      },
+      {
+        "invoice_number": "HL-8724",
+        "amount_cents": 401000,
+        "paid_on": "2026-05-15"
+      },
+      {
+        "invoice_number": "HL-8740",
+        "amount_cents": 398000,
+        "paid_on": "2026-06-15"
+      },
+      {
+        "invoice_number": "HL-8763",
+        "amount_cents": 406000,
+        "paid_on": "2026-07-15"
+      },
+      {
+        "invoice_number": "HL-8781",
+        "amount_cents": 410000,
+        "paid_on": "2026-08-15"
+      },
+      {
+        "invoice_number": "HL-8795",
+        "amount_cents": 390000,
+        "paid_on": "2026-09-15"
+      }
+    ],
+    "median_cents": 399500,
+    "routing": "044000105",
+    "bank_name": "Gateway National Bank",
+    "account_masked": "••••4455",
+    "bank_history": [
+      {
+        "old_bank_name": "River City Bank",
+        "old_routing": "102030402",
+        "old_account_masked": "••••3377",
+        "new_bank_name": "Gateway National Bank",
+        "new_routing": "044000105",
+        "new_account_masked": "••••4455",
+        "invoice_id": "inv_fixture05",
+        "verification_id": "ver_fixture06",
+        "changed_at": "2026-10-10T15:01:28Z"
+      }
+    ]
+  },
+  {
+    "id": "ven_prairie",
+    "name": "Prairie Cloud Hosting",
+    "domains": [
+      "prairiecloud.io"
+    ],
+    "phone_masked": "•••-•••-0199",
+    "bank_masked": "Midland Trust Bank ••••2201",
+    "history": [
+      {
+        "invoice_number": "PCH-1101",
+        "amount_cents": 249900,
+        "paid_on": "2026-04-15"
+      },
+      {
+        "invoice_number": "PCH-1102",
+        "amount_cents": 249900,
+        "paid_on": "2026-05-15"
+      },
+      {
+        "invoice_number": "PCH-1103",
+        "amount_cents": 249900,
+        "paid_on": "2026-06-15"
+      },
+      {
+        "invoice_number": "PCH-1104",
+        "amount_cents": 249900,
+        "paid_on": "2026-07-15"
+      },
+      {
+        "invoice_number": "PCH-1105",
+        "amount_cents": 249900,
+        "paid_on": "2026-08-15"
+      },
+      {
+        "invoice_number": "PCH-1106",
+        "amount_cents": 249900,
+        "paid_on": "2026-09-15"
+      }
+    ],
+    "median_cents": 249900,
+    "routing": "301112228",
+    "bank_name": "Midland Trust Bank",
+    "account_masked": "••••2201",
+    "bank_history": []
+  }
+]

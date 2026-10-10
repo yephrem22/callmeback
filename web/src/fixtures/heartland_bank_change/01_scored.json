@@ -1,0 +1,209 @@
+{
+  "id": "inv_fixture05",
+  "status": "CALL_PENDING",
+  "hold_reason": null,
+  "source": "sample",
+  "created_at": "2026-10-10T15:00:54Z",
+  "invoice_number": "HL-8812",
+  "amount_cents": 412000,
+  "decided_at": null,
+  "email": {
+    "from_name": "Heartland Logistics AR",
+    "from_email": "ar@heartland-logistics.com",
+    "reply_to": null,
+    "subject": "Invoice HL-8812 and new remittance details",
+    "received_at": "2026-10-08T16:05:00Z",
+    "body_text": "Hello,\n\nHere are the details for invoice HL-8812 for September freight.\n\nInvoice number: HL-8812\nAmount due: $4,120.00\nDue date: November 9, 2026\n\nPlease note we moved our banking to Gateway National Bank effective October 1, 2026.\nBank: Gateway National Bank\nRouting number: 044000105\nAccount number: 6620194455\n\nYou are welcome to confirm this change with our office at the number you have on file.\n\nRegards,\nDana Whitfield\nController, Heartland Logistics LLC\n"
+  },
+  "extracted": {
+    "fields": {
+      "vendor_name": {
+        "value": "Heartland Logistics",
+        "source": "header",
+        "mismatch": false
+      },
+      "invoice_number": {
+        "value": "HL-8812",
+        "source": "regex",
+        "mismatch": false
+      },
+      "amount": {
+        "value": "4120.00",
+        "source": "regex",
+        "mismatch": false
+      },
+      "due_date": {
+        "value": "November 9, 2026",
+        "source": "regex",
+        "mismatch": false
+      },
+      "bank_name": {
+        "value": "Gateway National Bank",
+        "source": "regex",
+        "mismatch": false
+      },
+      "routing_number": {
+        "value": "044000105",
+        "source": "regex",
+        "mismatch": false
+      },
+      "account_number": {
+        "value": "••••4455",
+        "source": "regex",
+        "mismatch": false
+      }
+    },
+    "phone_numbers_in_email": [],
+    "llm_status": "fallback"
+  },
+  "vendor": {
+    "id": "ven_heartland",
+    "name": "Heartland Logistics LLC",
+    "domains": [
+      "heartland-logistics.com"
+    ],
+    "phone_masked": "•••-•••-0199",
+    "bank_masked": "River City Bank ••••3377",
+    "history": [
+      {
+        "invoice_number": "HL-8701",
+        "amount_cents": 395000,
+        "paid_on": "2026-04-15"
+      },
+      {
+        "invoice_number": "HL-8724",
+        "amount_cents": 401000,
+        "paid_on": "2026-05-15"
+      },
+      {
+        "invoice_number": "HL-8740",
+        "amount_cents": 398000,
+        "paid_on": "2026-06-15"
+      },
+      {
+        "invoice_number": "HL-8763",
+        "amount_cents": 406000,
+        "paid_on": "2026-07-15"
+      },
+      {
+        "invoice_number": "HL-8781",
+        "amount_cents": 410000,
+        "paid_on": "2026-08-15"
+      },
+      {
+        "invoice_number": "HL-8795",
+        "amount_cents": 390000,
+        "paid_on": "2026-09-15"
+      }
+    ],
+    "median_cents": 399500
+  },
+  "risk": {
+    "points": 50,
+    "tier": "RED",
+    "action": "CALLBACK",
+    "sender_status": "KNOWN",
+    "amount_ratio": 1.03,
+    "lookalike": null,
+    "flags": [
+      {
+        "code": "BANK_CHANGED",
+        "points": 50,
+        "title": "Bank details differ from vendor record",
+        "detail": "Email asks for payment to Gateway National Bank; vendor record has River City Bank",
+        "evidence": [
+          "routing 044000105 vs 102030402 on file",
+          "account ••••4455 vs ••••3377 on file"
+        ]
+      }
+    ],
+    "bank_changed": true,
+    "policy_version": "2026-10-10.1"
+  },
+  "destination": {
+    "on_file": {
+      "bank_name": "River City Bank",
+      "routing": "102030402",
+      "account_masked": "••••3377"
+    },
+    "requested": {
+      "bank_name": "Gateway National Bank",
+      "routing": "044000105",
+      "account_masked": "••••4455"
+    },
+    "changed": true
+  },
+  "analyst": {
+    "status": "pending",
+    "report": null
+  },
+  "verification": null,
+  "payment": null,
+  "memo": null,
+  "trace": [],
+  "audit": [
+    {
+      "seq": 21,
+      "ts": "2026-10-10T15:00:55Z",
+      "actor": "system",
+      "event": "invoice_received",
+      "summary": "invoice received",
+      "hash_short": "357b1a"
+    },
+    {
+      "seq": 22,
+      "ts": "2026-10-10T15:00:58Z",
+      "actor": "system",
+      "event": "status_changed",
+      "summary": "RECEIVED → EXTRACTED",
+      "hash_short": "b37e54"
+    },
+    {
+      "seq": 23,
+      "ts": "2026-10-10T15:00:59Z",
+      "actor": "system",
+      "event": "extraction_done",
+      "summary": "extraction done",
+      "hash_short": "c72324"
+    },
+    {
+      "seq": 24,
+      "ts": "2026-10-10T15:01:01Z",
+      "actor": "policy",
+      "event": "vendor_resolved",
+      "summary": "Heartland Logistics LLC (KNOWN)",
+      "hash_short": "0e0c45"
+    },
+    {
+      "seq": 25,
+      "ts": "2026-10-10T15:01:04Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "EXTRACTED → SCORED",
+      "hash_short": "b7ab30"
+    },
+    {
+      "seq": 26,
+      "ts": "2026-10-10T15:01:05Z",
+      "actor": "policy",
+      "event": "risk_scored",
+      "summary": "50 points, RED, CALLBACK",
+      "hash_short": "3405a9"
+    },
+    {
+      "seq": 27,
+      "ts": "2026-10-10T15:01:07Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "SCORED → CALL_PENDING",
+      "hash_short": "320632"
+    }
+  ],
+  "actions": {
+    "can_review": false,
+    "can_retry_call": false,
+    "can_simulate": true,
+    "can_redteam": true
+  },
+  "ai_fallback": false
+}

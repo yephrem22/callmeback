@@ -236,3 +236,202 @@ def update_vendor_bank(conn: sqlite3.Connection, vendor_id: str, bank_name: str 
                        routing: str, account: str) -> None:
     conn.execute("UPDATE vendors SET bank_name=?, routing=?, account=?, updated_at=? WHERE id=?",
                  (bank_name, routing, account, now_iso(), vendor_id))
+
+
+# ---- views for the API and the fixtures (PLAN.md §7.6) --------------------------
+
+def _mask_acct(a: str | None) -> str | None:
+    return ("••••" + a[-4:]) if a else None
+
+
+def _mask_phone(p: str | None) -> str | None:
+    digits = "".join(ch for ch in (p or "") if ch.isdigit())
+    return ("•••-•••-" + digits[-4:]) if digits else None
+
+
+def vendor_view(conn: sqlite3.Connection, vendor: dict) -> dict:
+    return {
+        "id": vendor["id"], "name": vendor["name"], "domains": vendor["domains"],
+        "phone_masked": _mask_phone(vendor["phone_on_file"]),
+        "bank_masked": f"{vendor['bank_name']} {_mask_acct(vendor['account'])}",
+        "history": vendor_history(conn, vendor["id"]),
+        "median_cents": vendor_median_cents(conn, vendor["id"]),
+    }
+
+
+def vendors_view(conn: sqlite3.Connection) -> list[dict]:
+    out = []
+    for v in list_vendors(conn):
+        d = vendor_view(conn, v)
+        d["routing"] = v["routing"]
+        d["bank_name"] = v["bank_name"]
+        d["account_masked"] = _mask_acct(v["account"])
+        d["bank_history"] = [{
+            "old_bank_name": h["old_bank_name"], "old_routing": h["old_routing"],
+            "old_account_masked": _mask_acct(h["old_account"]),
+            "new_bank_name": h["new_bank_name"], "new_routing": h["new_routing"],
+            "new_account_masked": _mask_acct(h["new_account"]),
+            "invoice_id": h["invoice_id"], "verification_id": h["verification_id"], "changed_at": h["changed_at"],
+        } for h in vendor_bank_history(conn, v["id"])]
+        out.append(d)
+    return out
+
+
+def payment_view(p: dict | None) -> dict | None:
+    if not p:
+        return None
+    return {"id": p["id"], "invoice_id": p["invoice_id"], "amount_cents": p["amount_cents"],
+            "bank_name": p["bank_name"], "routing": p["routing"], "account_masked": _mask_acct(p["account"]),
+            "method": p["method"], "effective_date": p["effective_date"], "released_at": p["released_at"],
+            "released_by": p["released_by"]}
+
+
+def payments_view(conn: sqlite3.Connection) -> dict:
+    held = []
+    for inv in list_invoices(conn):
+        if inv["status"] == "HELD":
+            full = get_invoice(conn, inv["id"])
+            held.append({"id": inv["id"], "vendor_name": inv["vendor_name"],
+                         "amount_cents": (full.get("risk") or {}).get("amount_cents"),
+                         "hold_reason": inv["hold_reason"], "created_at": inv["created_at"]})
+    return {"payments": [payment_view(p) for p in list_payments(conn)], "held": held}
+
+
+def stats_view(conn: sqlite3.Connection) -> dict:
+    from datetime import datetime
+
+    released = conn.execute("SELECT COALESCE(SUM(amount_cents),0) FROM payments").fetchone()[0]
+    held_cents = 0
+    decision_secs: list[float] = []
+    n = 0
+    for r in conn.execute("SELECT id, status, risk, created_at, updated_at FROM invoices").fetchall():
+        n += 1
+        inv = row_to_dict(r)
+        risk = inv.get("risk") or {}
+        if inv["status"] == "HELD":
+            held_cents += risk.get("amount_cents") or 0
+        if inv["status"] in ("RELEASED", "HELD", "FAILED"):
+            try:
+                a = datetime.fromisoformat(inv["created_at"].replace("Z", "+00:00"))
+                b = datetime.fromisoformat(inv["updated_at"].replace("Z", "+00:00"))
+                decision_secs.append((b - a).total_seconds())
+            except (ValueError, AttributeError):
+                pass
+    calls = conn.execute("SELECT COUNT(*) FROM verifications WHERE kind='invoice'").fetchone()[0]
+    median = statistics.median(decision_secs) if decision_secs else None
+    return {"released_cents": released, "held_cents": held_cents, "invoices": n, "calls_placed": calls,
+            "median_decision_seconds": round(median, 1) if median is not None else None}
+
+
+def list_traces(conn: sqlite3.Connection, subject_id: str) -> list[dict]:
+    return [dict(r) for r in conn.execute(
+        "SELECT ts, agent, run_id, kind, name, summary, duration_ms FROM agent_traces WHERE subject_id=? ORDER BY id",
+        (subject_id,)).fetchall()]
+
+
+def invoice_detail(conn: sqlite3.Connection, invoice_id: str) -> dict | None:
+    """The PLAN.md §7.6 InvoiceDetail shape. The UI depends on these exact keys;
+    spec 005's GET /api/invoices/{id} and the fixtures exporter both call this."""
+    from app import audit, config, ledger
+    from app.models import RiskResult
+    from app.policy.engine import amount_ratio
+    from core.checks import lookalike_diff
+
+    inv = get_invoice(conn, invoice_id)
+    if inv is None:
+        return None
+    status = inv["status"]
+    risk_raw = inv.get("risk")
+    risk = RiskResult.model_validate(risk_raw) if risk_raw else None
+    ext = inv.get("extraction") or {}
+    vendor = get_vendor(conn, inv["vendor_id"]) if inv.get("vendor_id") else None
+    ver = latest_verification(conn, invoice_id)
+    pay = get_payment(conn, invoice_id)
+
+    field_names = ("vendor_name", "invoice_number", "amount", "due_date", "bank_name", "routing_number", "account_number")
+    fields = {}
+    for name in field_names:
+        f = ext.get(name) or {"value": None, "source": "none", "mismatch": False}
+        value = f.get("value")
+        if name == "account_number" and value:
+            value = _mask_acct(value)
+        fields[name] = {"value": value, "source": f.get("source", "none"), "mismatch": bool(f.get("mismatch"))}
+
+    lookalike = None
+    risk_view = None
+    if risk:
+        if risk.sender_status == "LOOKALIKE":
+            flag = next((f for f in risk.flags if f.code == "LOOKALIKE_DOMAIN"), None)
+            known = flag.evidence[1] if flag and len(flag.evidence) > 1 else None
+            lookalike = {"sender_domain": inv.get("from_domain"), "known_domain": known,
+                         "diff": lookalike_diff(inv.get("from_domain") or "", known or "") if known else []}
+        risk_view = {
+            "points": risk.points, "tier": risk.tier, "action": risk.action, "sender_status": risk.sender_status,
+            "amount_ratio": amount_ratio(risk), "lookalike": lookalike,
+            "flags": [{"code": f.code, "points": f.points, "title": f.title, "detail": f.detail,
+                       "evidence": list(f.evidence)} for f in risk.flags],
+            "bank_changed": risk.bank_changed, "policy_version": risk.policy_version,
+        }
+
+    requested = None
+    if risk and (risk.proposed_routing or risk.proposed_account):
+        requested = {"bank_name": risk.proposed_bank_name, "routing": risk.proposed_routing,
+                     "account_masked": _mask_acct(risk.proposed_account)}
+    elif (ext.get("routing_number") or {}).get("value") or (ext.get("account_number") or {}).get("value"):
+        requested = {"bank_name": (ext.get("bank_name") or {}).get("value"),
+                     "routing": (ext.get("routing_number") or {}).get("value"),
+                     "account_masked": _mask_acct((ext.get("account_number") or {}).get("value"))}
+    destination = {
+        "on_file": ({"bank_name": vendor["bank_name"], "routing": vendor["routing"],
+                     "account_masked": _mask_acct(vendor["account"])} if vendor else None),
+        "requested": requested,
+        "changed": bool(risk and risk.bank_changed),
+    }
+
+    verification = None
+    if ver:
+        first_answer = None
+        if ver.get("answer_channel"):
+            first_answer = {"channel": ver.get("answer_channel"), "digits": ver.get("digits"),
+                            "speech": ver.get("speech"), "confidence": ver.get("speech_confidence"),
+                            "det_label": ver.get("det_label"), "llm_label": ver.get("llm_label")}
+        verification = {"id": ver["id"], "source": ver["source"], "step": ver["step"],
+                        "phone_masked": _mask_phone(ver.get("phone_called")), "events": ver.get("events") or [],
+                        "first_answer": first_answer, "last4_ok": ver.get("last4_ok"),
+                        "final_label": ver.get("final_label"), "attempts": ver.get("attempts") or 0}
+
+    can_release_now = ledger.can_release(invoice_id, conn=conn)[0] if risk else False
+    can_retry = ledger.retry_callback_allowed(invoice_id, conn=conn)
+    actions = {
+        "can_review": status == "NEEDS_REVIEW",
+        "can_retry_call": can_retry,
+        "can_simulate": bool(config.S.demo_mode and (status in ("CALL_PENDING", "CALLING") or can_retry)),
+        "can_redteam": bool(risk) and not can_release_now,
+    }
+    analyst = inv.get("analyst") or {"status": "pending", "report": None}
+    amount_cents = risk.amount_cents if risk else None
+
+    return {
+        "id": inv["id"], "status": status, "hold_reason": inv.get("hold_reason"), "source": inv["source"],
+        "created_at": inv["created_at"],
+        "invoice_number": fields["invoice_number"]["value"], "amount_cents": amount_cents,
+        "decided_at": inv["updated_at"] if status in ("RELEASED", "HELD", "FAILED") else None,
+        "email": {"from_name": inv.get("from_name"), "from_email": inv.get("from_email"),
+                  "reply_to": inv.get("reply_to"), "subject": inv.get("subject"),
+                  "received_at": inv.get("received_at"), "body_text": inv.get("body_text")},
+        "extracted": {"fields": fields, "phone_numbers_in_email": ext.get("phone_numbers_in_email") or [],
+                      "llm_status": ext.get("llm_status", "pending")},
+        "vendor": vendor_view(conn, vendor) if vendor else None,
+        "risk": risk_view,
+        "destination": destination,
+        "analyst": analyst,
+        "verification": verification,
+        "payment": payment_view(pay),
+        "memo": inv.get("memo"),
+        "trace": list_traces(conn, invoice_id),
+        "audit": [{"seq": e["seq"], "ts": e["ts"], "actor": e["actor"], "event": e["event"],
+                   "summary": e["summary"], "hash_short": e["hash_short"]}
+                  for e in audit.list_entries(invoice_id, conn=conn)],
+        "actions": actions,
+        "ai_fallback": bool(inv.get("ai_fallback")),
+    }

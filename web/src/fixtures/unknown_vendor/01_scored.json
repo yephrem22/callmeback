@@ -1,0 +1,172 @@
+{
+  "id": "inv_fixture10",
+  "status": "HELD",
+  "hold_reason": "UNKNOWN_VENDOR",
+  "source": "sample",
+  "created_at": "2026-10-10T15:01:58Z",
+  "invoice_number": "NW-5531",
+  "amount_cents": 730000,
+  "decided_at": "2026-10-10T15:02:10Z",
+  "email": {
+    "from_name": "Northwind Industrial Parts",
+    "from_email": "invoices@northwind-parts.co",
+    "reply_to": null,
+    "subject": "Invoice NW-5531 for bearings",
+    "received_at": "2026-10-09T15:12:00Z",
+    "body_text": "Hello,\n\nPlease pay invoice NW-5531 for the bearing order.\n\nInvoice number: NW-5531\nAmount due: $7,300.00\nDue date: October 30, 2026\n\nBank: Lakeside Commerce Bank\nRouting number: 071000014\nAccount number: 5098812230\n\nNorthwind Industrial Parts\n"
+  },
+  "extracted": {
+    "fields": {
+      "vendor_name": {
+        "value": "Northwind Industrial Parts",
+        "source": "header",
+        "mismatch": false
+      },
+      "invoice_number": {
+        "value": "NW-5531",
+        "source": "regex",
+        "mismatch": false
+      },
+      "amount": {
+        "value": "7300.00",
+        "source": "regex",
+        "mismatch": false
+      },
+      "due_date": {
+        "value": "October 30, 2026",
+        "source": "regex",
+        "mismatch": false
+      },
+      "bank_name": {
+        "value": "Lakeside Commerce Bank",
+        "source": "regex",
+        "mismatch": false
+      },
+      "routing_number": {
+        "value": "071000014",
+        "source": "regex",
+        "mismatch": false
+      },
+      "account_number": {
+        "value": "••••2230",
+        "source": "regex",
+        "mismatch": false
+      }
+    },
+    "phone_numbers_in_email": [],
+    "llm_status": "fallback"
+  },
+  "vendor": null,
+  "risk": {
+    "points": 60,
+    "tier": "RED",
+    "action": "HOLD_MANUAL",
+    "sender_status": "NO_VENDOR",
+    "amount_ratio": null,
+    "lookalike": null,
+    "flags": [
+      {
+        "code": "UNKNOWN_VENDOR",
+        "points": 30,
+        "title": "No vendor record found",
+        "detail": "No vendor master record matches Northwind Industrial Parts or northwind-parts.co",
+        "evidence": [
+          "northwind-parts.co"
+        ]
+      },
+      {
+        "code": "INVALID_ROUTING",
+        "points": 30,
+        "title": "Routing number fails ABA checksum",
+        "detail": "071000014 fails the ABA checksum",
+        "evidence": [
+          "071000014"
+        ]
+      }
+    ],
+    "bank_changed": false,
+    "policy_version": "2026-10-10.1"
+  },
+  "destination": {
+    "on_file": null,
+    "requested": {
+      "bank_name": "Lakeside Commerce Bank",
+      "routing": "071000014",
+      "account_masked": "••••2230"
+    },
+    "changed": false
+  },
+  "analyst": {
+    "status": "pending",
+    "report": null
+  },
+  "verification": null,
+  "payment": null,
+  "memo": null,
+  "trace": [],
+  "audit": [
+    {
+      "seq": 45,
+      "ts": "2026-10-10T15:01:59Z",
+      "actor": "system",
+      "event": "invoice_received",
+      "summary": "invoice received",
+      "hash_short": "da5d80"
+    },
+    {
+      "seq": 46,
+      "ts": "2026-10-10T15:02:02Z",
+      "actor": "system",
+      "event": "status_changed",
+      "summary": "RECEIVED → EXTRACTED",
+      "hash_short": "bdf8a9"
+    },
+    {
+      "seq": 47,
+      "ts": "2026-10-10T15:02:03Z",
+      "actor": "system",
+      "event": "extraction_done",
+      "summary": "extraction done",
+      "hash_short": "230a49"
+    },
+    {
+      "seq": 48,
+      "ts": "2026-10-10T15:02:05Z",
+      "actor": "policy",
+      "event": "vendor_resolved",
+      "summary": "no vendor (NO_VENDOR)",
+      "hash_short": "8814e8"
+    },
+    {
+      "seq": 49,
+      "ts": "2026-10-10T15:02:08Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "EXTRACTED → SCORED",
+      "hash_short": "a320ae"
+    },
+    {
+      "seq": 50,
+      "ts": "2026-10-10T15:02:09Z",
+      "actor": "policy",
+      "event": "risk_scored",
+      "summary": "60 points, RED, HOLD_MANUAL",
+      "hash_short": "ed4ebf"
+    },
+    {
+      "seq": 51,
+      "ts": "2026-10-10T15:02:11Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "SCORED → HELD (UNKNOWN_VENDOR)",
+      "hash_short": "5b7f04"
+    }
+  ],
+  "actions": {
+    "can_review": false,
+    "can_retry_call": false,
+    "can_simulate": false,
+    "can_redteam": true
+  },
+  "ai_fallback": false
+}

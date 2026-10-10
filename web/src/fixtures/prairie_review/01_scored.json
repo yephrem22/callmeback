@@ -1,0 +1,217 @@
+{
+  "id": "inv_fixture08",
+  "status": "NEEDS_REVIEW",
+  "hold_reason": null,
+  "source": "sample",
+  "created_at": "2026-10-10T15:01:35Z",
+  "invoice_number": "PCH-1107",
+  "amount_cents": 524000,
+  "decided_at": null,
+  "email": {
+    "from_name": "Prairie Cloud Hosting Billing",
+    "from_email": "billing@prairiecloud.io",
+    "reply_to": null,
+    "subject": "Invoice PCH-1107 (includes annual support renewal)",
+    "received_at": "2026-10-09T13:30:00Z",
+    "body_text": "Hello,\n\nYour October invoice includes the annual premium support renewal.\n\nInvoice number: PCH-1107\nAmount due: $5,240.00\nDue date: October 12, 2026\n\nPlease process today to avoid any service interruption.\nPayment details are unchanged:\nBank: Midland Trust Bank\nRouting number: 301112228\nAccount number: 8800142201\n\nPrairie Cloud Hosting Billing\n"
+  },
+  "extracted": {
+    "fields": {
+      "vendor_name": {
+        "value": "Prairie Cloud Hosting",
+        "source": "header",
+        "mismatch": false
+      },
+      "invoice_number": {
+        "value": "PCH-1107",
+        "source": "regex",
+        "mismatch": false
+      },
+      "amount": {
+        "value": "5240.00",
+        "source": "regex",
+        "mismatch": false
+      },
+      "due_date": {
+        "value": "October 12, 2026",
+        "source": "regex",
+        "mismatch": false
+      },
+      "bank_name": {
+        "value": "Midland Trust Bank",
+        "source": "regex",
+        "mismatch": false
+      },
+      "routing_number": {
+        "value": "301112228",
+        "source": "regex",
+        "mismatch": false
+      },
+      "account_number": {
+        "value": "••••2201",
+        "source": "regex",
+        "mismatch": false
+      }
+    },
+    "phone_numbers_in_email": [],
+    "llm_status": "fallback"
+  },
+  "vendor": {
+    "id": "ven_prairie",
+    "name": "Prairie Cloud Hosting",
+    "domains": [
+      "prairiecloud.io"
+    ],
+    "phone_masked": "•••-•••-0199",
+    "bank_masked": "Midland Trust Bank ••••2201",
+    "history": [
+      {
+        "invoice_number": "PCH-1101",
+        "amount_cents": 249900,
+        "paid_on": "2026-04-15"
+      },
+      {
+        "invoice_number": "PCH-1102",
+        "amount_cents": 249900,
+        "paid_on": "2026-05-15"
+      },
+      {
+        "invoice_number": "PCH-1103",
+        "amount_cents": 249900,
+        "paid_on": "2026-06-15"
+      },
+      {
+        "invoice_number": "PCH-1104",
+        "amount_cents": 249900,
+        "paid_on": "2026-07-15"
+      },
+      {
+        "invoice_number": "PCH-1105",
+        "amount_cents": 249900,
+        "paid_on": "2026-08-15"
+      },
+      {
+        "invoice_number": "PCH-1106",
+        "amount_cents": 249900,
+        "paid_on": "2026-09-15"
+      }
+    ],
+    "median_cents": 249900
+  },
+  "risk": {
+    "points": 25,
+    "tier": "YELLOW",
+    "action": "REVIEW",
+    "sender_status": "KNOWN",
+    "amount_ratio": 2.1,
+    "lookalike": null,
+    "flags": [
+      {
+        "code": "AMOUNT_2X",
+        "points": 15,
+        "title": "Amount is 2.1× this vendor's median",
+        "detail": "$5,240.00 against a median of $2,499.00 over the last 6 invoices",
+        "evidence": [
+          "2.10×"
+        ]
+      },
+      {
+        "code": "URGENCY",
+        "points": 10,
+        "title": "Pressure to pay fast",
+        "detail": "Language pressing for immediate payment: \"today\"",
+        "evidence": [
+          "today"
+        ]
+      }
+    ],
+    "bank_changed": false,
+    "policy_version": "2026-10-10.1"
+  },
+  "destination": {
+    "on_file": {
+      "bank_name": "Midland Trust Bank",
+      "routing": "301112228",
+      "account_masked": "••••2201"
+    },
+    "requested": {
+      "bank_name": "Midland Trust Bank",
+      "routing": "301112228",
+      "account_masked": "••••2201"
+    },
+    "changed": false
+  },
+  "analyst": {
+    "status": "pending",
+    "report": null
+  },
+  "verification": null,
+  "payment": null,
+  "memo": null,
+  "trace": [],
+  "audit": [
+    {
+      "seq": 34,
+      "ts": "2026-10-10T15:01:36Z",
+      "actor": "system",
+      "event": "invoice_received",
+      "summary": "invoice received",
+      "hash_short": "c2aec4"
+    },
+    {
+      "seq": 35,
+      "ts": "2026-10-10T15:01:39Z",
+      "actor": "system",
+      "event": "status_changed",
+      "summary": "RECEIVED → EXTRACTED",
+      "hash_short": "5590e6"
+    },
+    {
+      "seq": 36,
+      "ts": "2026-10-10T15:01:40Z",
+      "actor": "system",
+      "event": "extraction_done",
+      "summary": "extraction done",
+      "hash_short": "191f39"
+    },
+    {
+      "seq": 37,
+      "ts": "2026-10-10T15:01:42Z",
+      "actor": "policy",
+      "event": "vendor_resolved",
+      "summary": "Prairie Cloud Hosting (KNOWN)",
+      "hash_short": "59b269"
+    },
+    {
+      "seq": 38,
+      "ts": "2026-10-10T15:01:45Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "EXTRACTED → SCORED",
+      "hash_short": "00c883"
+    },
+    {
+      "seq": 39,
+      "ts": "2026-10-10T15:01:46Z",
+      "actor": "policy",
+      "event": "risk_scored",
+      "summary": "25 points, YELLOW, REVIEW",
+      "hash_short": "ceb624"
+    },
+    {
+      "seq": 40,
+      "ts": "2026-10-10T15:01:48Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "SCORED → NEEDS_REVIEW",
+      "hash_short": "cf28b9"
+    }
+  ],
+  "actions": {
+    "can_review": true,
+    "can_retry_call": false,
+    "can_simulate": false,
+    "can_redteam": true
+  },
+  "ai_fallback": false
+}

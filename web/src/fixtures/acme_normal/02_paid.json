@@ -1,0 +1,225 @@
+{
+  "id": "inv_fixture01",
+  "status": "RELEASED",
+  "hold_reason": null,
+  "source": "sample",
+  "created_at": "2026-10-10T15:00:03Z",
+  "invoice_number": "INV-20431",
+  "amount_cents": 1215000,
+  "decided_at": "2026-10-10T15:00:18Z",
+  "email": {
+    "from_name": "Acme Supply Co. Billing",
+    "from_email": "billing@acme-supply.com",
+    "reply_to": null,
+    "subject": "Invoice INV-20431 from Acme Supply Co.",
+    "received_at": "2026-10-08T14:14:00Z",
+    "body_text": "Hello Northgate AP team,\n\nPlease find invoice INV-20431 for September fasteners and fittings.\n\nInvoice number: INV-20431\nAmount due: $12,150.00\nDue date: November 7, 2026\n\nRemit by ACH to our account on file:\nBank: Plains Federal Bank\nRouting number: 123456780\nAccount number: 4421984821\n\nThank you for your business,\nMaria Lopez\nAccounts Receivable, Acme Supply Co.\n"
+  },
+  "extracted": {
+    "fields": {
+      "vendor_name": {
+        "value": "Acme Supply Co.",
+        "source": "header",
+        "mismatch": false
+      },
+      "invoice_number": {
+        "value": "INV-20431",
+        "source": "regex",
+        "mismatch": false
+      },
+      "amount": {
+        "value": "12150.00",
+        "source": "regex",
+        "mismatch": false
+      },
+      "due_date": {
+        "value": "November 7, 2026",
+        "source": "regex",
+        "mismatch": false
+      },
+      "bank_name": {
+        "value": "Plains Federal Bank",
+        "source": "regex",
+        "mismatch": false
+      },
+      "routing_number": {
+        "value": "123456780",
+        "source": "regex",
+        "mismatch": false
+      },
+      "account_number": {
+        "value": "••••4821",
+        "source": "regex",
+        "mismatch": false
+      }
+    },
+    "phone_numbers_in_email": [],
+    "llm_status": "fallback"
+  },
+  "vendor": {
+    "id": "ven_acme",
+    "name": "Acme Supply Co.",
+    "domains": [
+      "acme-supply.com"
+    ],
+    "phone_masked": "•••-•••-0199",
+    "bank_masked": "Plains Federal Bank ••••4821",
+    "history": [
+      {
+        "invoice_number": "INV-20301",
+        "amount_cents": 1182000,
+        "paid_on": "2026-04-15"
+      },
+      {
+        "invoice_number": "INV-20322",
+        "amount_cents": 1204000,
+        "paid_on": "2026-05-15"
+      },
+      {
+        "invoice_number": "INV-20355",
+        "amount_cents": 1196000,
+        "paid_on": "2026-06-15"
+      },
+      {
+        "invoice_number": "INV-20381",
+        "amount_cents": 1231000,
+        "paid_on": "2026-07-15"
+      },
+      {
+        "invoice_number": "INV-20398",
+        "amount_cents": 1200000,
+        "paid_on": "2026-08-15"
+      },
+      {
+        "invoice_number": "INV-20412",
+        "amount_cents": 1215000,
+        "paid_on": "2026-09-15"
+      }
+    ],
+    "median_cents": 1202000
+  },
+  "risk": {
+    "points": 0,
+    "tier": "GREEN",
+    "action": "AUTO_RELEASE",
+    "sender_status": "KNOWN",
+    "amount_ratio": 1.01,
+    "lookalike": null,
+    "flags": [],
+    "bank_changed": false,
+    "policy_version": "2026-10-10.1"
+  },
+  "destination": {
+    "on_file": {
+      "bank_name": "Plains Federal Bank",
+      "routing": "123456780",
+      "account_masked": "••••4821"
+    },
+    "requested": {
+      "bank_name": "Plains Federal Bank",
+      "routing": "123456780",
+      "account_masked": "••••4821"
+    },
+    "changed": false
+  },
+  "analyst": {
+    "status": "pending",
+    "report": null
+  },
+  "verification": null,
+  "payment": {
+    "id": "pay_fixture02",
+    "invoice_id": "inv_fixture01",
+    "amount_cents": 1215000,
+    "bank_name": "Plains Federal Bank",
+    "routing": "123456780",
+    "account_masked": "••••4821",
+    "method": "ACH-CCD",
+    "effective_date": "2026-10-12",
+    "released_at": "2026-10-10T15:00:17Z",
+    "released_by": "policy:auto"
+  },
+  "memo": null,
+  "trace": [],
+  "audit": [
+    {
+      "seq": 2,
+      "ts": "2026-10-10T15:00:04Z",
+      "actor": "system",
+      "event": "invoice_received",
+      "summary": "invoice received",
+      "hash_short": "3612a4"
+    },
+    {
+      "seq": 3,
+      "ts": "2026-10-10T15:00:07Z",
+      "actor": "system",
+      "event": "status_changed",
+      "summary": "RECEIVED → EXTRACTED",
+      "hash_short": "1aeac4"
+    },
+    {
+      "seq": 4,
+      "ts": "2026-10-10T15:00:08Z",
+      "actor": "system",
+      "event": "extraction_done",
+      "summary": "extraction done",
+      "hash_short": "8a45f8"
+    },
+    {
+      "seq": 5,
+      "ts": "2026-10-10T15:00:10Z",
+      "actor": "policy",
+      "event": "vendor_resolved",
+      "summary": "Acme Supply Co. (KNOWN)",
+      "hash_short": "0941d5"
+    },
+    {
+      "seq": 6,
+      "ts": "2026-10-10T15:00:13Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "EXTRACTED → SCORED",
+      "hash_short": "4ff15a"
+    },
+    {
+      "seq": 7,
+      "ts": "2026-10-10T15:00:14Z",
+      "actor": "policy",
+      "event": "risk_scored",
+      "summary": "0 points, GREEN, AUTO_RELEASE",
+      "hash_short": "90c3fc"
+    },
+    {
+      "seq": 8,
+      "ts": "2026-10-10T15:00:16Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "SCORED → AUTO_APPROVED",
+      "hash_short": "89d962"
+    },
+    {
+      "seq": 9,
+      "ts": "2026-10-10T15:00:19Z",
+      "actor": "policy",
+      "event": "status_changed",
+      "summary": "AUTO_APPROVED → RELEASED",
+      "hash_short": "65c768"
+    },
+    {
+      "seq": 10,
+      "ts": "2026-10-10T15:00:20Z",
+      "actor": "policy",
+      "event": "payment_released",
+      "summary": "GREEN invoice with no flags; policy auto-release",
+      "hash_short": "ed2ff2"
+    }
+  ],
+  "actions": {
+    "can_review": false,
+    "can_retry_call": false,
+    "can_simulate": false,
+    "can_redteam": true
+  },
+  "ai_fallback": false
+}

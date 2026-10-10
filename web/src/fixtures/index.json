@@ -1,0 +1,103 @@
+{
+  "acme_normal": [
+    {
+      "step": "scored",
+      "file": "acme_normal/01_scored.json",
+      "status": "AUTO_APPROVED",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture01"
+    },
+    {
+      "step": "paid",
+      "file": "acme_normal/02_paid.json",
+      "status": "RELEASED",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture01"
+    }
+  ],
+  "acme_fraud": [
+    {
+      "step": "scored",
+      "file": "acme_fraud/01_scored.json",
+      "status": "CALL_PENDING",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture03"
+    },
+    {
+      "step": "calling",
+      "file": "acme_fraud/02_calling.json",
+      "status": "CALLING",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture03"
+    },
+    {
+      "step": "held",
+      "file": "acme_fraud/03_held.json",
+      "status": "HELD",
+      "hold_reason": "DENIED_BY_VENDOR",
+      "invoice_id": "inv_fixture03"
+    }
+  ],
+  "heartland_bank_change": [
+    {
+      "step": "scored",
+      "file": "heartland_bank_change/01_scored.json",
+      "status": "CALL_PENDING",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture05"
+    },
+    {
+      "step": "calling",
+      "file": "heartland_bank_change/02_calling.json",
+      "status": "CALLING",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture05"
+    },
+    {
+      "step": "confirmed",
+      "file": "heartland_bank_change/03_confirmed.json",
+      "status": "CONFIRMED",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture05"
+    },
+    {
+      "step": "paid",
+      "file": "heartland_bank_change/04_paid.json",
+      "status": "RELEASED",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture05"
+    }
+  ],
+  "prairie_review": [
+    {
+      "step": "scored",
+      "file": "prairie_review/01_scored.json",
+      "status": "NEEDS_REVIEW",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture08"
+    },
+    {
+      "step": "approved",
+      "file": "prairie_review/02_approved.json",
+      "status": "REVIEW_APPROVED",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture08"
+    },
+    {
+      "step": "paid",
+      "file": "prairie_review/03_paid.json",
+      "status": "RELEASED",
+      "hold_reason": null,
+      "invoice_id": "inv_fixture08"
+    }
+  ],
+  "unknown_vendor": [
+    {
+      "step": "scored",
+      "file": "unknown_vendor/01_scored.json",
+      "status": "HELD",
+      "hold_reason": "UNKNOWN_VENDOR",
+      "invoice_id": "inv_fixture10"
+    }
+  ]
+}
