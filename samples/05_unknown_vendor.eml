@@ -1,0 +1,21 @@
+From: "Northwind Industrial Parts" <invoices@northwind-parts.co>
+To: ap@northgate-mfg.example
+Subject: Invoice NW-5531 for bearings
+Date: Fri, 09 Oct 2026 10:12:00 -0500
+Message-ID: <nw-5531@northwind-parts.co>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Hello,
+
+Please pay invoice NW-5531 for the bearing order.
+
+Invoice number: NW-5531
+Amount due: $7,300.00
+Due date: October 30, 2026
+
+Bank: Lakeside Commerce Bank
+Routing number: 071000014
+Account number: 5098812230
+
+Northwind Industrial Parts

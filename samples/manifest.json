@@ -1,0 +1,27 @@
+[
+  {
+    "name": "01_acme_normal",
+    "title": "Acme: normal invoice",
+    "description": "Known vendor, same bank on file, normal amount. Green and paid automatically."
+  },
+  {
+    "name": "02_acme_fraud",
+    "title": "Acme: urgent bank change",
+    "description": "Lookalike domain, new bank account, four times the usual amount, pressure to pay today and to skip the callback. Red; the vendor is called at the number on file."
+  },
+  {
+    "name": "03_heartland_bank_change",
+    "title": "Heartland: legitimate bank change",
+    "description": "Known vendor announcing a real bank change. Red; confirmed on a callback with the last four digits, then paid and the vendor master updated."
+  },
+  {
+    "name": "04_prairie_review",
+    "title": "Prairie Cloud: higher than usual",
+    "description": "Known vendor, same bank, about twice the usual amount with a hint of urgency. Yellow; goes to a human reviewer."
+  },
+  {
+    "name": "05_unknown_vendor",
+    "title": "Unknown vendor",
+    "description": "No vendor record and a routing number that fails the checksum. Held for manual onboarding; there is no trusted number to call."
+  }
+]
