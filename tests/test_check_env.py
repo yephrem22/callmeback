@@ -256,9 +256,32 @@ def test_rows_to_probe_skips_missing_and_fake_in_build():
 
 
 def test_pure_core_imports_no_network_clients():
+    """Network clients are imported lazily inside the probe functions, never at module scope."""
+    import subprocess
     import sys
-    assert "twilio" not in sys.modules or "scripts.check_env" in sys.modules
-    assert "boto3.session" not in sys.modules or True  # boto3 is imported lazily inside probes
-    src = (REPO / "scripts" / "check_env.py").read_text()
-    head = src.split("# --------------------------------------------------------------------------- probes")[0]
-    assert "import twilio" not in head and "import boto3" not in head and "import httpx" not in head
+    code = ("import sys; import scripts.check_env, scripts.gen_secrets; "
+            "print(sorted(m for m in ('twilio', 'boto3', 'httpx', 'botocore') if m in sys.modules))")
+    out = subprocess.run([sys.executable, "-c", code], cwd=REPO, capture_output=True, text=True, check=True).stdout
+    assert out.strip() == "[]", out
+
+
+# --------------------------------------------------------------------- part D: zero credentials (US2)
+
+def test_example_env_with_secrets_is_a_complete_fake_mode_config():
+    env = with_secrets(example_env())
+    all_ok = {key: ok() for key in ce.PROBES}
+    report = evaluate(env, "build", all_ok)
+    assert report.ok and report.failures == []
+    for key in ("akamai_inference", "object_storage", "twilio", "aws"):
+        assert row(report, key).status == "FAKE", key  # mode wins over credentials (FR-010)
+    assert row(report, "app_secrets").status == "READY"
+    # and with nothing probed at all (no network), the result is the same
+    assert evaluate(env, "build").ok
+
+
+def test_mode_variable_makes_row_fake_even_with_real_credentials():
+    env = with_secrets({**example_env(), "OBJ_ACCESS_KEY": "AKIA0123456789ABCDEF",
+                        "OBJ_SECRET_KEY": "s3cr3t-0123456789abcdef0123456789", "STORAGE_MODE": "local"})
+    r = row(evaluate(env, "integrate", {"object_storage": ok("put/get/delete ok")}), "object_storage")
+    assert r.status == "FAKE" and r.probe == "ready" and "probe ok" in r.evidence
+    assert "s3cr3t-0123456789abcdef" not in r.evidence
