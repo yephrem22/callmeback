@@ -37,4 +37,4 @@ deploy:
 	@case "$(DEPLOY_SSH)" in \
 		root@|root@172-105-12-34.sslip.io) echo "HOST in .env is unset or the example value; set it first (spec 002)"; exit 1;; \
 	esac
-	ssh -A $(DEPLOY_SSH) 'cd /opt/callmeback && bash scripts/deploy.sh'
+	ssh -A -o StrictHostKeyChecking=accept-new $(DEPLOY_SSH) 'cd /opt/callmeback && bash scripts/deploy.sh'
