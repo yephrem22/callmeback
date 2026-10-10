@@ -9,8 +9,8 @@ Variables: `PY ?= .venv/bin/python` (falls back to `python3` when `.venv/` is ab
 | target | runs | notes |
 |---|---|---|
 | `install` | `uv venv .venv` (if missing) then `uv pip install -p .venv/bin/python -r requirements.txt` | addition for the runbook; idempotent |
-| `secrets` | `$(PY) scripts/gen_secrets.py $(ARGS)` | spec 001 |
-| `check-env` | `$(PY) scripts/check_env.py --phase $(PHASE) $(ARGS)` | `make check-env PHASE=integrate`, `make check-env ARGS="--json"` |
+| `secrets` | `$(PY) -m scripts.gen_secrets $(ARGS)` | spec 001 |
+| `check-env` | `$(PY) -m scripts.check_env --phase $(PHASE) $(ARGS)` | `make check-env PHASE=integrate`, `make check-env ARGS="--json"` |
 | `test` | `$(PY) -m pytest -q`; then, only if `web/` exists: `cd web && npm run typecheck && npm run lint && npm run build` | PLAN.md §17.1 "Web checks"; fails fast on the first failing step |
 | `dev` | `$(PY) -m uvicorn app.main:app --reload --port 8000` | `app/main.py` arrives with spec 005; until then prints "app/main.py not yet present (spec 005)" and exits 1 |
 | `fixtures` | `$(PY) scripts/export_fixtures.py` | spec 003 (Builder A); prints a note and exits 1 if the script is absent |

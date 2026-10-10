@@ -13,10 +13,10 @@ install:
 	uv pip install -p .venv/bin/python -r requirements.txt
 
 secrets:
-	$(PY) scripts/gen_secrets.py $(ARGS)
+	$(PY) -m scripts.gen_secrets $(ARGS)
 
 check-env:
-	$(PY) scripts/check_env.py --phase $(PHASE) $(ARGS)
+	$(PY) -m scripts.check_env --phase $(PHASE) $(ARGS)
 
 test:
 	$(PY) -m pytest -q
