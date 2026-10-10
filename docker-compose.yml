@@ -1,0 +1,19 @@
+# PLAN.md §16.2, verbatim.
+services:
+  app:
+    build: { context: ., dockerfile: Dockerfile }
+    env_file: .env
+    volumes: ["./data:/srv/data"]
+    restart: unless-stopped
+  mcp:
+    build: { context: ., dockerfile: mcp_server/Dockerfile }
+    env_file: .env
+    volumes: ["./eb_data:/eb_data:ro"]
+    restart: unless-stopped
+  caddy:
+    image: caddy:2
+    env_file: .env
+    ports: ["80:80", "443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data", "caddy_config:/config"]
+    restart: unless-stopped
+volumes: { caddy_data: {}, caddy_config: {} }

@@ -1,0 +1,17 @@
+# PLAN.md §16.2: no secret or local state enters an image
+.env
+.env.local
+data/
+eb_data/
+web/node_modules
+web/dist
+web/snapshots
+.claude/
+.git
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.specify/
+specs/
+docs/

@@ -1,0 +1,24 @@
+{
+	email {$ACME_EMAIL}
+}
+{$HOST} {
+	encode gzip
+	handle /healthz {
+		reverse_proxy app:8000
+	}
+	handle /mcp* {
+		reverse_proxy mcp:8001
+	}
+	handle /twilio/* {
+		reverse_proxy app:8000
+	}
+	handle /internal/* {
+		respond 404
+	}
+	handle {
+		basic_auth {
+			{$DASH_USER} {$DASH_PASS_HASH}
+		}
+		reverse_proxy app:8000
+	}
+}
