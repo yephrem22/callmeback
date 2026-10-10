@@ -148,3 +148,91 @@ def list_invoices(conn: sqlite3.Connection) -> list[dict]:
             "source": inv["source"],
         })
     return out
+
+
+# ---- verifications -------------------------------------------------------------
+
+def insert_verification(conn: sqlite3.Connection, **cols: Any) -> str:
+    ts = now_iso()
+    cols.setdefault("created_at", ts)
+    cols.setdefault("updated_at", ts)
+    cols.setdefault("events", [])
+    cols.setdefault("attempts", 0)
+    cols.setdefault("step", "created")
+    keys = list(cols)
+    _check_columns(conn, "verifications", keys)
+    conn.execute(
+        f"INSERT INTO verifications ({', '.join(keys)}) VALUES ({', '.join('?' for _ in keys)})",
+        [_encode(k, cols[k]) for k in keys],
+    )
+    return cols["id"]
+
+
+def get_verification(conn: sqlite3.Connection, ver_id: str) -> dict | None:
+    return row_to_dict(conn.execute("SELECT * FROM verifications WHERE id=?", (ver_id,)).fetchone())
+
+
+def latest_verification(conn: sqlite3.Connection, subject_id: str) -> dict | None:
+    return row_to_dict(conn.execute(
+        "SELECT * FROM verifications WHERE subject_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1",
+        (subject_id,)).fetchone())
+
+
+def update_verification(conn: sqlite3.Connection, ver_id: str, **cols: Any) -> None:
+    if not cols:
+        return
+    cols["updated_at"] = now_iso()
+    _check_columns(conn, "verifications", cols)
+    sets = ", ".join(f"{k}=?" for k in cols)
+    conn.execute(f"UPDATE verifications SET {sets} WHERE id=?",
+                 [_encode(k, v) for k, v in cols.items()] + [ver_id])
+
+
+# ---- payments ------------------------------------------------------------------
+
+def insert_payment(conn: sqlite3.Connection, **cols: Any) -> str:
+    cols.setdefault("released_at", now_iso())
+    cols.setdefault("method", "ACH-CCD")
+    keys = list(cols)
+    _check_columns(conn, "payments", keys)
+    conn.execute(
+        f"INSERT INTO payments ({', '.join(keys)}) VALUES ({', '.join('?' for _ in keys)})",
+        [cols[k] for k in keys],
+    )
+    return cols["id"]
+
+
+def get_payment(conn: sqlite3.Connection, invoice_id: str) -> dict | None:
+    return row_to_dict(conn.execute("SELECT * FROM payments WHERE invoice_id=?", (invoice_id,)).fetchone())
+
+
+def list_payments(conn: sqlite3.Connection) -> list[dict]:
+    return [row_to_dict(r) for r in conn.execute("SELECT * FROM payments ORDER BY released_at DESC, rowid DESC").fetchall()]
+
+
+# ---- vendor bank history -------------------------------------------------------
+
+def insert_bank_history(conn: sqlite3.Connection, **cols: Any) -> None:
+    cols.setdefault("changed_at", now_iso())
+    keys = list(cols)
+    _check_columns(conn, "vendor_bank_history", keys)
+    conn.execute(
+        f"INSERT INTO vendor_bank_history ({', '.join(keys)}) VALUES ({', '.join('?' for _ in keys)})",
+        [cols[k] for k in keys],
+    )
+
+
+def vendor_bank_history(conn: sqlite3.Connection, vendor_id: str) -> list[dict]:
+    return [row_to_dict(r) for r in conn.execute(
+        "SELECT * FROM vendor_bank_history WHERE vendor_id=? ORDER BY changed_at, id", (vendor_id,)).fetchall()]
+
+
+def bank_history_for_verification(conn: sqlite3.Connection, verification_id: str) -> dict | None:
+    return row_to_dict(conn.execute(
+        "SELECT * FROM vendor_bank_history WHERE verification_id=?", (verification_id,)).fetchone())
+
+
+def update_vendor_bank(conn: sqlite3.Connection, vendor_id: str, bank_name: str | None,
+                       routing: str, account: str) -> None:
+    conn.execute("UPDATE vendors SET bank_name=?, routing=?, account=?, updated_at=? WHERE id=?",
+                 (bank_name, routing, account, now_iso(), vendor_id))
