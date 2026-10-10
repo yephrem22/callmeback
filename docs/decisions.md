@@ -46,3 +46,10 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 ## Contract changes (PLAN.md §7; both builders must agree)
 
 - none yet
+
+## Akamai setup facts (2026-10-10, Yoseph)
+
+- Linode account `yephrem` with the $300 promo applied; laptop token scoped Account RO + Linodes/Firewalls/Object Storage RW.
+- Object Storage bucket `callmeback-evidence-tenex` in us-ord. The endpoint Cloud Manager/API returned is `https://us-ord-10.linodeobjects.com` (cluster `us-ord-10`, not the `us-ord-1` placeholder in `.env.example`); `OBJ_REGION=us-ord-10`. Access key `callmeback-app` (id 6772570) is limited to that bucket. Put/get/delete and presigned URLs verified.
+- Inference: the first key handed out was another team's spare and the gateway rejects it (`401 api key authentication failure: invalid credentials`) with the correct Bearer header and base URL. Waiting on a fresh team key; `AI_MODE=off` until it probes clean.
+- `INTERNAL_TOKEN`, `MCP_TOKEN` and `DASH_PASS_HASH` were generated locally (same recipe as spec 001's `make secrets`); the dashboard password is in Yoseph's password manager.
