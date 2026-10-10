@@ -113,9 +113,9 @@ Single Python project per plan.md: `core/`, `app/`, `samples/`, `scripts/`, `tes
 
 ## Phase 5: Polish and hand-off
 
-- [ ] T041 [P] Run `specs/003-core-engine/quickstart.md` top to bottom on a clean checkout and fix anything that does not match its expected output.
-- [ ] T042 [P] Write `docs/core-engine.md` (≤ 60 lines): module map, how spec 005 should call `engine.ingest_*`, `ledger.can_release`, `repo.invoice_detail`, and the one-transaction rule for `transition`/`release`; link to PLAN.md sections.
-- [ ] T043 Rebase on `origin/main`, run `pytest -q` (and `make test` if spec 001 has landed), push, merge to `main`, and remove the worktree per PLAN.md §0.8 step 6.
+- [x] T041 [P] Run `specs/003-core-engine/quickstart.md` top to bottom on a clean checkout and fix anything that does not match its expected output.
+- [x] T042 [P] Write `docs/core-engine.md` (≤ 60 lines): module map, how spec 005 should call `engine.ingest_*`, `ledger.can_release`, `repo.invoice_detail`, and the one-transaction rule for `transition`/`release`; link to PLAN.md sections.
+- [x] T043 Rebase on `origin/main`, run `pytest -q` (and `make test` if spec 001 has landed), push, merge to `main`, and remove the worktree per PLAN.md §0.8 step 6.
 
 ---
 
