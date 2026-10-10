@@ -69,8 +69,10 @@ def test_audit_append_is_serialised_across_threads(db):
     assert seqs == list(range(1, 41))
 
 
-def test_audit_verify_fails_closed_until_chain_exists():
-    assert audit.verify() == (False, None)
+def test_audit_verify_detects_a_blank_hash(db):
+    audit.append("inv_v", "system", "invoice_received", {}, conn=db)
+    db.execute("UPDATE audit_log SET hash='' WHERE seq=1")
+    assert audit.verify(db) == (False, 1)
 
 
 def test_repo_rejects_unknown_columns(db):

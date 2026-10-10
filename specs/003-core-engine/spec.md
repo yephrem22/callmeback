@@ -130,7 +130,7 @@ An AP clerk uploads a real `.eml` file instead of picking a sample. The same ext
 - Two different routing or account numbers in one email: the first is kept and a 0-point EXTRACTION_MISMATCH flag is added (PLAN.md §9.2). Points, tier and action do not change.
 - Routing number fails the checksum: it is still extracted; INVALID_ROUTING scores it (PLAN.md §9.2, §10.2).
 - Known vendor, no bank details in the email: NO_BANK_DETAILS (0 points) and the payment goes to the account on file; a missing value never counts as "changed" (PLAN.md §10.2).
-- A phrase split across a line break (sample 02's "release the / payment immediately") still matches, because whitespace is collapsed before matching (PLAN.md §10.3). "Today" inside "today's" does not match, because phrases must stand alone.
+- A phrase split across a line break (sample 02's "release the / payment immediately") still matches, because whitespace is collapsed before matching (PLAN.md §10.3). "today" inside "todays" or "uptoday" does not match, because a phrase may not be directly preceded or followed by a letter or digit; punctuation such as an apostrophe is a boundary, so "today's" does match.
 - "Invoice November ..." is not read as an invoice number (PLAN.md §9.2).
 - Subdomain of a vendor domain (mail.acme-supply.com) is KNOWN, not LOOKALIKE; gmail.com is neither (PLAN.md §17.1 vectors).
 - Vendor with fewer than three paid invoices: no amount flags.

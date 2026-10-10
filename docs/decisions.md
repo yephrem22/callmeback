@@ -4,7 +4,9 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 
 ## Setup facts (2026-10-10)
 
-- Builder A: Yoseph. Builder B: Sahaj. Repo created under Yoseph's GitHub account.
+- Builder A: Yoseph. Builder B: Sahaj. Third teammate: Shubhangi. Repo created under Yoseph's GitHub account (yephrem22/callmeback).
+- Reassignment, 2026-10-10 afternoon: Yoseph takes the Akamai work (spec 002 cloud-infra, inference key, Object Storage) in addition to 003, 005 and the UI specs 004/007; Sahaj keeps 001 and 006 and the vendor phone; Shubhangi takes 008 devrev-connector; 009 is shared. If Shubhangi finishes 008 early or stalls on DevRev access, she picks up the UI track (004/007).
+- Spec 003 phase 1 landed on main 2026-10-10 (contracts frozen; 311 tests).
 - Spec Kit 1.1.3, Python 3.12 (uv-managed), Node 22 installed on A's laptop at kickoff.
 - Constitution v1.0.0 ratified 2026-10-10.
 

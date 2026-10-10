@@ -113,6 +113,15 @@ def update_invoice(conn: sqlite3.Connection, invoice_id: str, **cols: Any) -> No
                  [_encode(k, v) for k, v in cols.items()] + [invoice_id])
 
 
+def get_risk(conn: sqlite3.Connection, invoice_id: str):
+    from app.models import RiskResult
+
+    inv = get_invoice(conn, invoice_id)
+    if not inv or not inv.get("risk"):
+        return None
+    return RiskResult.model_validate(inv["risk"])
+
+
 def list_invoices(conn: sqlite3.Connection) -> list[dict]:
     """Queue rows, newest first (PLAN.md §7.6 GET /api/invoices)."""
     out = []
