@@ -41,7 +41,7 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 
 ## Timings and spikes
 
-- Twilio spike (B2) dial / ring / answer times: _pending_
+- Twilio spike (B2), 2026-10-10 23:39 UTC on the VM (spec 002, Sahaj): queued 0.6 s → **ringing 1.1–1.7 s** after `calls.create` → answered by B after 17.5 s of ringing (human pick-up, not system latency) → Q1 prompt ~12 s → answer webhook accepted (Gather dtmf+speech) → completed at 37.6 s, call duration 19 s. Prompt was clear; "test is complete" heard. **Caller-ID was flagged as spam** by B's carrier and showed the payer name; mitigation per §16.4/§16.5: save the Twilio number as the contact "Call Me Back Verify" on the demo phone, and keep the other builder's phone as fallback. Twilio Voice geo-permissions had to be enabled for United States/Canada first (the API refused the call until then).
 - LLM smoke test (A2) streaming decision: see `docs/llm_smoke.md` once it exists.
 
 ## Contract changes (PLAN.md §7; both builders must agree)

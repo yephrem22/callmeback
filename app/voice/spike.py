@@ -17,6 +17,10 @@ from twilio.twiml.voice_response import Gather, VoiceResponse
 from app.config import S
 
 log = logging.getLogger("voice.spike")
+if not log.handlers:  # the app has no logging config yet (spec 005); make the spike lines visible
+    log.addHandler(logging.StreamHandler())
+    log.setLevel(logging.INFO)
+    log.propagate = False
 router = APIRouter(prefix="/twilio/spike")
 VOICE = "Polly.Joanna-Neural"
 

@@ -27,17 +27,26 @@ def main() -> int:
         print("PUBLIC_BASE_URL or DEMO_VENDOR_PHONE is a placeholder; nothing dialled", file=sys.stderr)
         return 1
 
+    from twilio.base.exceptions import TwilioRestException
     from twilio.rest import Client
     client = Client(env["TWILIO_ACCOUNT_SID"], env["TWILIO_AUTH_TOKEN"])
     t0 = time.time()
-    call = client.calls.create(
-        to=to, from_=env["TWILIO_FROM_NUMBER"],
-        url=f"{base}/twilio/spike/voice", method="POST",
-        status_callback=f"{base}/twilio/spike/status",
-        status_callback_event=["initiated", "ringing", "answered", "completed"],
-        status_callback_method="POST",
-        timeout=25,
-    )
+    try:
+        call = client.calls.create(
+            to=to, from_=env["TWILIO_FROM_NUMBER"],
+            url=f"{base}/twilio/spike/voice", method="POST",
+            status_callback=f"{base}/twilio/spike/status",
+            status_callback_event=["initiated", "ringing", "answered", "completed"],
+            status_callback_method="POST",
+            timeout=25,
+        )
+    except TwilioRestException as exc:
+        # Twilio echoes the dialled number in its message; keep phone numbers masked (PLAN.md §6).
+        msg = str(exc.msg or exc).replace(to, mask(to)).replace(env["TWILIO_FROM_NUMBER"], mask(env["TWILIO_FROM_NUMBER"]))
+        print(f"Twilio refused the call (HTTP {exc.status}): {msg}", file=sys.stderr)
+        if "not authorized to call" in msg:
+            print("Enable the United States under Voice → Geo permissions in the Twilio Console (PLAN.md §16.4)", file=sys.stderr)
+        return 1
     print(f"call {call.sid} placed to {mask(to)} at t=0.0 s; answer the phone and say yes or press 1")
     seen = None
     while True:
