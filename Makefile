@@ -20,7 +20,7 @@ check-env:
 
 test:
 	$(PY) -m pytest -q
-	@if [ -d web ]; then \
+	@if [ -f web/package.json ]; then \
 		echo "web checks (PLAN.md §17.1)"; \
 		cd web && npm run typecheck && npm run lint && npm run build; \
 	fi
