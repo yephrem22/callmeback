@@ -33,10 +33,10 @@ No new tables. Everything here uses the frozen PLAN.md §7.2 schema (spec 003, `
 
 ## In-memory structures
 
-- **AgentRun**: `{run_id, agent, subject_id, started_at, timeout_s, outcome: "result"|"fallback"|"late"}`; not persisted beyond trace rows.
+- **AgentRun**: `{run_id, agent, subject_id, started_at, timeout_s, outcome: "result"|"fallback"}` (what `run_agent` returns); a late result after the timeout is discarded with nothing recorded (the spec's "ignored-late"). Not persisted beyond trace rows.
 - **AI mode**: process-wide `effective_ai_mode()` → `"live"|"off"` (R10).
 - **Rate bucket**: process-wide token bucket of `LLM_RPM` per 60 s shared by every agent (RateLimitPlugin).
-- **Health cache**: `{model_ok, latency_ms, checked_at}` refreshed at most every 60 s when there were no recent model calls.
+- **Health cache**: `{model_ok, latency_ms, checked_at}` plus `provider` (`akamai` | `bedrock`, whichever answered the latest model call; FR-025), refreshed at most every 60 s when there were no recent model calls.
 
 ## Validation rules (from PLAN.md, enforced in code)
 

@@ -107,6 +107,8 @@ def test_call_failure_holds_and_retry_works(db, monkeypatch):
     config.reload()
     iid = _submit("02_acme_fraud")                                         # the pre-006 stub cannot place calls
     assert (_inv(db, iid)["status"], _inv(db, iid)["hold_reason"]) == ("HELD", "CALL_FAILED")
+    assert _inv(db, iid)["memo"] is not None                              # FR-006: every HELD entry gets a memo
+    assert db.execute("SELECT COUNT(*) FROM payments").fetchone()[0] == 0
     monkeypatch.setenv("VOICE_MODE", "simulated")
     config.reload()
     pipeline.retry_callback(iid)

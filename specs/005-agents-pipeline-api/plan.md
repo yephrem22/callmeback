@@ -26,7 +26,7 @@ Wrap spec 003's deterministic engine in an asynchronous pipeline with four Stran
 
 **Constraints**: 60 req/min team cap (our bucket 45); one backing model; 512 default output tokens; JOBS=8 / AGENTS=4 executors and the deadlock rule; plain `def` routes; masking everywhere except Intake's raw email; no files created under `app/voice/` (spec 006 owns it).
 
-**Scale/Scope**: ~12 new modules, ~10 test files, 22 HTTP routes.
+**Scale/Scope**: ~12 new modules, ~10 test files, 19 HTTP routes (18 `/api/*` routes in `app/api.py` plus `/healthz`).
 
 ## Constitution Check
 

@@ -133,8 +133,7 @@ def review(invoice_id: str, body: Review) -> dict:
         ledger.record_review(invoice_id, body.decision, body.note)
     except (IllegalTransition, PolicyViolation) as e:
         raise _conflict(e) from e
-    if body.decision == "approve":
-        pipeline.run_payments_agent(invoice_id)
+    pipeline.run_payments_agent(invoice_id)          # approve → release; reject → HELD, memo only (FR-006)
     return {"ok": True}
 
 

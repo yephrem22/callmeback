@@ -242,3 +242,15 @@ Built solo in one session (the team decided to finish the specs in order). Spec 
 - Never create files under `app/voice/`; never edit the frozen §7 files.
 - `.specify/feature.json` is machine-local; never commit it.
 - Commit messages name the task IDs.
+
+---
+
+## Phase 6: Convergence
+
+- [x] T043 Run the Payments agent (memo only, via `pipeline.run_payments_agent`) on every entry to HELD, not just the ones covered so far: after a reviewer **reject** in `app/api.py` (`/api/invoices/{id}/review`), and after `request_callback` holds with CALL_FAILED in `app/pipeline.py`; extend `tests/test_api.py` and `tests/test_pipeline_flow.py` to assert a memo exists for HELD/REVIEW_REJECTED and HELD/CALL_FAILED per FR-006 (partial)
+- [x] T044 Create `tests/test_fixtures_contract.py`: play the five §8.4 stories through the API (TestClient, AI off) and assert that every nested key path in the final-step fixture under `web/src/fixtures/<scenario>/` (and in `invoices_list.json`, `health.json`, `stats.json`, `payments.json`, `vendors.json`, `audit.json`) is present in the live response, so the UI's fixture shape is enforced in the suite per SC-008 (partial)
+- [x] T045 Record in `specs/005-agents-pipeline-api/research.md` R5 that the deadlock rule now covers SQLite as well: never write on a second connection while holding `db.tx()`; spec 003's `audit.append` dropped its Python lock (lock-order deadlock found in T037) and relies on BEGIN IMMEDIATE; `executors.wait_idle()` and `tests/test_audit_concurrency.py` exist for this, per plan: executors decision (unrequested)
+- [x] T046 Add `provider` (`akamai` | `bedrock`) to the health cache entity in `specs/005-agents-pipeline-api/data-model.md`, and change research R1's Bedrock row from "P2 fallback" to "P3 fallback (US5)", per FR-025 (partial)
+- [x] T047 Retitle research R1 in `specs/005-agents-pipeline-api/research.md` so it no longer says "the two places it doesn't": name the two §11 deviations it lists and point to R2 for the third phase 1 finding (the Akamai gateway rejects an empty `tools` array), per analyze I3 (partial)
+- [x] T048 Correct `specs/005-agents-pipeline-api/plan.md` Scale/Scope from "22 HTTP routes" to the implemented 19 (18 `/api/*` routes in `app/api.py` plus `/healthz`), per analyze I4 (partial)
+- [x] T049 Align run-outcome terminology in `specs/005-agents-pipeline-api/data-model.md` (AgentRun `outcome`) with the code: `run_agent` returns `"result" | "fallback"`, and a late result after the timeout is discarded with nothing recorded (the spec's "ignored-late"), per analyze I5 (partial)

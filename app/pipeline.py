@@ -242,8 +242,9 @@ def request_callback(subject_id: str, kind: Literal["invoice", "change_case"]) -
                 verifications.add_event(c, ver_id, "Call failed", str(e)[:120])
                 repo.update_verification(c, ver_id, final_label="SUPERSEDED", step="done")
                 if kind == "invoice":
-                    _move(subject_id, Status.HELD, hold=HoldReason.CALL_FAILED, actor="system",
-                          detail={"verification_id": ver_id, "error": str(e)[:120]})
+                    if _move(subject_id, Status.HELD, hold=HoldReason.CALL_FAILED, actor="system",
+                             detail={"verification_id": ver_id, "error": str(e)[:120]}):
+                        run_payments_agent(subject_id)                  # memo only (FR-006)
                 else:
                     _set_case_status(c, subject_id, "UNCLEAR")
                 return ver_id

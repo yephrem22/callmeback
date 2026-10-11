@@ -103,6 +103,14 @@ def test_review_409_unless_needs_review_and_approve_pays(client):
     assert _get(client, f"/api/invoices/{prairie}")["status"] == "RELEASED"
 
 
+def test_review_reject_holds_and_writes_a_memo(client):
+    prairie = _submit(client, "04_prairie_review")
+    assert client.post(f"/api/invoices/{prairie}/review", json={"decision": "reject", "note": "not ours"}).status_code == 200
+    d = _get(client, f"/api/invoices/{prairie}")
+    assert (d["status"], d["hold_reason"]) == ("HELD", "REVIEW_REJECTED")
+    assert d["memo"] is not None and d["payment"] is None                 # FR-006: memo on every HELD entry
+
+
 def test_retry_callback_409_unless_retryable(client):
     fraud = _submit(client, "02_acme_fraud")
     assert client.post(f"/api/invoices/{fraud}/retry-callback").status_code == 409     # CALLING

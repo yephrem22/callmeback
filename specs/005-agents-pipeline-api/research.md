@@ -2,7 +2,7 @@
 
 PLAN.md §11 tells us to "check the constructor's parameters in the installed version". We did, against `strands-agents[openai]==1.59.0` (openai 2.54.0, mcp 2.1.1). Each item: decision, rationale, alternatives.
 
-## R1. Strands 1.59.0: what PLAN.md §11 gets right and the two places it doesn't
+## R1. Strands 1.59.0 vs PLAN.md §11: two deviations (the third phase 1 finding, empty `tools` arrays, is in R2)
 
 Verified by introspection (`inspect.signature`, dataclass fields, source):
 
@@ -20,7 +20,7 @@ Verified by introspection (`inspect.signature`, dataclass fields, source):
 | `StructuredOutputException` at `strands.types.exceptions` | present | as written |
 | `agent(prompt, structured_output_model=Model)` then `result.structured_output` | `Agent.__call__(prompt, ..., structured_output_model, ...)`; `AgentResult.structured_output` | as written |
 | fake model = subclass of `strands.models.Model` with `stream()` | abstract methods `get_config, stream, structured_output, update_config` | the fake implements all four |
-| `BedrockModel` for the P2 fallback | `strands.models.BedrockModel` importable | as written |
+| `BedrockModel` for the P3 fallback (US5) | `strands.models.BedrockModel` importable | as written |
 
 - **Decision**: follow PLAN.md §11 except the two rows marked; record both in `docs/decisions.md` so the other builders don't copy the bug from PLAN.md.
 - **Rationale**: PLAN.md's intent (streaming off by default; the guard must run) is preserved; only the spelling of the mechanism changes. Not a §7 contract change.
@@ -48,6 +48,7 @@ Verified by introspection (`inspect.signature`, dataclass fields, source):
 - **Decision**: `app/executors.py` owns `JOBS = ThreadPoolExecutor(8, thread_name_prefix="jobs")` and `AGENTS = ThreadPoolExecutor(4, thread_name_prefix="agents")`, and `app/pipeline.py` re-exports them (analyze A1: this avoids a pipeline ↔ runner import cycle while keeping "two executors, nothing else spawns threads"). `run_agent()` asserts it is not running on an `agents-` thread before waiting on an AGENTS future; `start_agent()` submits to JOBS. Tests can swap both for a synchronous executor (`use_inline_executors()`) so flows are deterministic.
 - **Timeouts free their thread (analyze C2)**: a timed-out run's `threading.Event` is passed to Strands as `cancel_signal` and checked by every closure-bound tool, so a late run stops instead of acting after its fallback, and only 4 agent threads can never all be held by stuck runs.
 - **One retry policy (analyze C1)**: Strands 1.59.0 agents default to `ModelRetryStrategy(max_attempts=6, initial_delay=4, max_delay=240)` on `ModelThrottledException`. Every agent passes `retry_strategy=None`, and `RateLimitPlugin` is the only retry policy (at most 3, honouring `x-ratelimit-reset` from the exception's cause).
+- **The rule covers SQLite too (found in T037)**: never write on a second connection while holding `db.tx()` on the first; join the open transaction instead (`conn=c`). Spec 003's `audit.append` took a Python lock *and* SQLite's write lock in caller-dependent order, so under real thread pools one append stalled 5 s and failed with `database is locked`. The Python lock was removed; `BEGIN IMMEDIATE` alone serialises appends. `tests/test_audit_concurrency.py` reproduces the interleaving, and `executors.wait_idle()` keeps background threads from outliving a test. The inline executors the suite uses cannot surface this class of bug, so the quickstart (T041) runs on real uvicorn and real pools.
 - **Rationale**: PLAN.md §6; a runtime assert turns a deadlock into a loud error.
 
 ## R6. Voice functions before spec 006 lands
