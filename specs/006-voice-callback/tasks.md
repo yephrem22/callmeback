@@ -91,7 +91,7 @@ Single project: `app/`, `tests/`, `scripts/`, `docs/` at the repository root. Ne
 - [ ] T017 [US1] Live check on the VM (manual, needs spec 002's public URL and the Twilio variables in the VM's `.env`; never print them): `VOICE_MODE=twilio`; `scripts/probe_edge.sh`; run quickstart.md §3 steps 3–5 (fraud "no" → HELD(DENIED_BY_VENDOR); Heartland press 1 + 4455# → RELEASED to ••••4455; no answer → HELD(NO_ANSWER)); record ring time, answer-to-HELD time and any 11200/403 in `docs/decisions.md`; if Twilio rejects `Polly.Joanna-Neural`, switch `twiml.VOICE` to `VOICE_FALLBACK` and note it
 - [x] T018 [P] Write `docs/voice.md` (≤ 50 lines): the four routes and their check order, the scripts' source (contracts/scripts.md), simulated vs twilio mode, the signature URL rule and the 403 fix (PLAN.md §16.5), how to switch the voice, and how a webhook reaches `app/pipeline.py`
 - [x] T019 [P] Run `specs/006-voice-callback/quickstart.md` §1–§2 on a fresh database and fix anything that does not match its expected results
-- [ ] T020 Run `/speckit-converge` until it reports converged, then rebase on `origin/main`, run the full `pytest -q`, push, fast-forward `main`, and remove the worktree when asked (PLAN.md §0.5 step 6)
+- [x] T020 Run `/speckit-converge` until it reports converged, then rebase on `origin/main`, run the full `pytest -q`, push, fast-forward `main`, and remove the worktree when asked (PLAN.md §0.5 step 6)
 
 ---
 
