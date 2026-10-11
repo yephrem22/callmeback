@@ -76,3 +76,15 @@ Earlier observations (gallery):
 - The Recharts variants (1A, 3A) render fine but add ~140 kB gzipped to the bundle for the whole app; the CSS/SVG variants (1B, 3B) read at least as well at distance. If the gate picks the B variants everywhere, Recharts can be dropped from the production bundle.
 - Audit summaries for `invoice_received`, `extraction_done` and `verification_final` repeat the event name; a richer one-line summary would come from the backend's `audit.list_entries` (spec 003/005), not the UI.
 - All timestamps in fixtures read 10:00 because the exporter uses a fixed clock; the live API will show real times.
+
+## Spec 007 live vs prototype (T019, 2026-10-10)
+
+The §19.1 story ran end to end against the live API (`node scripts/snap.mjs --live`, AI off, simulated voice, fresh DB, 1024×576 = 1280×720 at 125%). It produced 20 screenshots in light and dark, with no console errors and no third-party requests. Stamp lag after the API reached each status was 0–95 ms, because clicks re-fetch; background changes ride the 1 s poll, measured at 986 ms in phase 1. The fixtures set was regenerated (28 shots) and reviewed against it.
+
+- **Same as the prototype:** the stamp, the decision sentence, the risk meter and flags, the destination cards, the callback timeline and transcript, the evidence tabs, the trace sheet, and the dark-mode contrast.
+- **Expected live differences:** the queue holds the stories loaded so far (fixtures show one invoice per scenario); relative times read "1s ago" instead of "12h ago"; call times are real (fixtures use a fixed 10:00 clock); and the DevRev tab lists real change cases (fixtures have none).
+- **Fixed in spec 007:**
+  - The red-team verdict opened behind the trace sheet. The verdict now shows first, and the trace opens when it closes.
+  - "Running on Akamai Cloud…" was hidden below 1280 px, i.e. at projector zoom. It now shows from 1024 px, truncated, with the full label in a tooltip.
+  - Call times are 12-hour everywhere.
+- **Known, pre-existing in both sets (not changed):** in the paid case's amount chart, the "median $12k" and "1.0× usual" labels overlap when the chart is narrow (bottom of the 1024 px viewport). Cosmetic; left for a polish pass.

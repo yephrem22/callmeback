@@ -42,7 +42,11 @@ export function Header() {
     <header className="flex h-14 items-center gap-4 whitespace-nowrap border-b border-border px-4">
       <div className="flex items-baseline gap-3">
         <h1 className="text-lg font-semibold tracking-tight">Call Me Back</h1>
-        <span className="hidden text-sm text-muted-foreground xl:inline">Running on {h?.deploy_label ?? "…"}</span>
+        {/* Visible from 1024 px: 1280×720 at 125% zoom is the stage (§14.10, §19.1 "Running on Akamai Cloud"). */}
+        <span className="hidden max-w-[13rem] truncate text-sm text-muted-foreground lg:inline xl:max-w-none"
+              title={h?.deploy_label ? `Running on ${h.deploy_label}` : undefined}>
+          Running on {h?.deploy_label ?? "…"}
+        </span>
       </div>
 
       <div className="ml-auto flex items-center gap-4">

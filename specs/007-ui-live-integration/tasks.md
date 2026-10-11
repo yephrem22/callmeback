@@ -109,7 +109,7 @@ description: "Task list for spec 007: UI Live Integration"
 
 **Independent Test**: `node web/scripts/snap.mjs --live --base http://localhost:5173 --api http://localhost:8000` exits 0.
 
-- [ ] T017 [US2] Edit `web/scripts/snap.mjs`: add `--live` with `--api <url>` (research R12).
+- [x] T017 [US2] Edit `web/scripts/snap.mjs`: add `--live` with `--api <url>` (research R12).
   - **Setup through the API**: `POST /api/demo/reset {}`; pre-run Heartland (from-sample `03_heartland_bank_change`, then simulate yes with 4455; wait for RELEASED).
   - **The story through the UI** at 1024×576 (1280×720 at 125%), for each theme:
     - empty case;
@@ -123,8 +123,8 @@ description: "Task list for spec 007: UI Live Integration"
   - **Latency**: measure from the API status change (poll `GET /api/invoices/{id}` in the script) to the stamp text change in the DOM, and fail if any exceeds 1500 ms.
   - **Hygiene**: keep the existing console-error and third-party-host checks.
   - **No credentials**: send no basic-auth header unless `--user`/`--pass` are given (for the VM run).
-- [ ] T018 [US2] Run the live story locally (uvicorn with `AI_MODE=off VOICE_MODE=simulated DEMO_MODE=1` on a fresh seeded DB, plus `VITE_API_MODE=live npx vite`) in light and dark mode. Fix any console error, foreign request, latency breach or §14.10 issue (legibility at 1024×576, contrast, status word + icon), within spec 004's design.
-- [ ] T019 [US3] Regenerate the fixtures snapshot set (`node web/scripts/snap.mjs` against `vite` in fixtures mode) and review it side by side with the live set. Record differences, and whether each is expected (live data) or a regression, in `docs/design/decisions.md` under "Spec 007 live vs prototype". Fix regressions.
+- [x] T018 [US2] Run the live story locally (uvicorn with `AI_MODE=off VOICE_MODE=simulated DEMO_MODE=1` on a fresh seeded DB, plus `VITE_API_MODE=live npx vite`) in light and dark mode. Fix any console error, foreign request, latency breach or §14.10 issue (legibility at 1024×576, contrast, status word + icon), within spec 004's design.
+- [x] T019 [US3] Regenerate the fixtures snapshot set (`node web/scripts/snap.mjs` against `vite` in fixtures mode) and review it side by side with the live set. Record differences, and whether each is expected (live data) or a regression, in `docs/design/decisions.md` under "Spec 007 live vs prototype". Fix regressions.
 
 **Checkpoint**: web checks, `pytest -q`; commit "spec 007 phase 4"; stop and report.
 
