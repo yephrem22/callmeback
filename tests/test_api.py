@@ -57,7 +57,7 @@ def test_healthz_and_health(client):
     assert client.get("/healthz").json() == {"ok": True}
     h = _get(client, "/api/health")
     assert set(h) == {"db", "model", "twilio", "storage", "demo_mode", "ai_mode", "deploy_label"}
-    assert set(h["model"]) == {"ok", "latency_ms", "checked_at"}
+    assert set(h["model"]) == {"ok", "latency_ms", "checked_at", "provider"} and h["model"]["provider"] == "akamai"
     assert h["db"] is True and h["model"]["ok"] is False and h["ai_mode"] == "off"
     assert set(h["twilio"]) == {"configured"} and set(h["storage"]) == {"ok"} and h["demo_mode"] is True
 

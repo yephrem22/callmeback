@@ -60,6 +60,8 @@ InvoiceDetail (the UI depends on these exact keys):
 }
 ```
 
+Spec 005 addition (FR-025): `/api/health` → `model.provider` is `"akamai"` or `"bedrock"`, whichever answered the most recent model call. It is an extra key; clients that ignore it are unaffected.
+
 Notes on the newer fields:
 - `vendor.history` holds the vendor's last six paid invoices, oldest first. It is empty when no vendor was resolved.
 - `risk.lookalike` is null unless the sender status is LOOKALIKE.

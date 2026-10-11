@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from collections.abc import Callable
 from concurrent.futures import Future
 from concurrent.futures import TimeoutError as FuturesTimeout
@@ -21,6 +22,7 @@ from typing import Any, Literal, TypeVar
 from strands.types.exceptions import StructuredOutputException
 
 from app import audit, db, executors, traces
+from app.agents import model as model_factory
 from app.ai_mode import effective_ai_mode
 
 log = logging.getLogger("agents.runner")
@@ -70,18 +72,41 @@ def run_agent(agent_name: str, subject_id: str, fn: Callable[[RunContext], T], t
     if effective_ai_mode() != "live":
         _record_fallback(ctx, "AI off")
         return fallback(), "fallback"
-    future: Future = executors.AGENTS.submit(fn, ctx)
+    t0 = time.monotonic()
+    ok, value, exc = _attempt(fn, ctx, model_factory.PROVIDER, timeout_s)
+    if ok:
+        return value, "result"
+    remaining = timeout_s - (time.monotonic() - t0)
+    if exc is not None and model_factory.fallback_enabled() and model_factory.is_provider_error(exc) and remaining > 0.5:
+        # P3 (FR-025): one retry on the alternate provider, inside the same time budget
+        traces.write(subject_id, run_id=ctx.run_id, agent=agent_name, kind="error", name=model_factory.PROVIDER,
+                     summary=f"{value}; retrying once on {model_factory.FALLBACK_PROVIDER}")
+        ctx = RunContext(ctx.run_id, agent_name, subject_id)
+        ok, value, exc = _attempt(fn, ctx, model_factory.FALLBACK_PROVIDER, remaining)
+        if ok:
+            return value, "result"
+    _record_fallback(ctx, value)
+    return fallback(), "fallback"
+
+
+def _attempt(fn: Callable[[RunContext], T], ctx: RunContext, provider: str,
+             timeout_s: float) -> tuple[bool, Any, BaseException | None]:
+    """One run on `provider`. Returns (True, result, None) or (False, reason, exception or None)."""
+
+    def call() -> T:
+        with model_factory.use_provider(provider):
+            return fn(ctx)
+
+    future: Future = executors.AGENTS.submit(call)
     try:
-        return future.result(timeout=timeout_s), "result"
+        return True, future.result(timeout=timeout_s), None
     except FuturesTimeout:
         ctx.cancel.set()
-        reason = f"timed out after {timeout_s:g} s"
+        return False, f"timed out after {timeout_s:g} s", None
     except StructuredOutputException as e:
-        reason = f"StructuredOutputException: {e}"
+        return False, f"StructuredOutputException: {e}", e
     except Exception as e:  # noqa: BLE001 - any agent failure falls back to rules
-        reason = f"{type(e).__name__}: {e}"
-    _record_fallback(ctx, reason)
-    return fallback(), "fallback"
+        return False, f"{type(e).__name__}: {e}", e
 
 
 def start_agent(agent_name: str, subject_id: str, fn: Callable[[RunContext], T], timeout_s: float,

@@ -18,7 +18,7 @@ from strands.tools.executors import SequentialToolExecutor
 from strands.types.exceptions import ModelThrottledException
 
 from app import audit, config, ledger, traces
-from app.agents.model import PROVIDER
+from app.agents.model import current_provider
 
 MAX_RETRIES = 3
 DEFAULT_RESET_S = 5.0
@@ -72,9 +72,10 @@ class TracePlugin(Plugin):
 
     name = "trace"
 
-    def __init__(self, subject_id: str, agent: str, run_id: str, provider: str = PROVIDER):
+    def __init__(self, subject_id: str, agent: str, run_id: str, provider: str | None = None):
         super().__init__()
-        self.subject_id, self.agent, self.run_id, self.provider = subject_id, agent, run_id, provider
+        self.subject_id, self.agent, self.run_id = subject_id, agent, run_id
+        self.provider = provider or current_provider()   # the provider this run was built for
         self._run_t0: float | None = None
         self._model_t0: float | None = None
         self._tool_t0: dict[str, float] = {}

@@ -12,6 +12,7 @@ import time
 import httpx
 
 from app import ai_mode, config, db, traces
+from app.agents.model import PROVIDER
 from app.ids import now_iso
 
 PING_TTL_S = 60.0
@@ -60,14 +61,28 @@ def _db_ok() -> bool:
         return False
 
 
+def _last_provider() -> str:
+    """Which provider answered the most recent model call (FR-025): akamai unless Bedrock stepped in."""
+    try:
+        c = db.connect()
+        try:
+            row = c.execute("SELECT name FROM agent_traces WHERE kind='model_call' ORDER BY id DESC LIMIT 1").fetchone()
+        finally:
+            c.close()
+    except Exception:  # noqa: BLE001
+        return PROVIDER
+    return row[0] if row and row[0] else PROVIDER
+
+
 def _model() -> dict:
+    provider = _last_provider()
     if ai_mode.effective_ai_mode() != "live":
-        return {"ok": False, "latency_ms": None, "checked_at": None}
+        return {"ok": False, "latency_ms": None, "checked_at": None, "provider": provider}
     median = traces.median_latency_ms()
     if median is not None:
-        return {"ok": True, "latency_ms": median, "checked_at": now_iso()}
+        return {"ok": True, "latency_ms": median, "checked_at": now_iso(), "provider": provider}
     ok, ms, at = _cached_ping()
-    return {"ok": ok, "latency_ms": ms, "checked_at": at}
+    return {"ok": ok, "latency_ms": ms, "checked_at": at, "provider": provider}
 
 
 def _storage_ok() -> bool:

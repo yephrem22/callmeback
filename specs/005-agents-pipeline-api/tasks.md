@@ -148,16 +148,16 @@ Single Python project at the repository root (plan.md): `app/`, `app/agents/`, `
 
 ### Tests for User Story 5 (write first)
 
-- [ ] T038 [P] [US5] Create `tests/test_bedrock_fallback.py` with fakes: a connection error, 5xx or post-retry 429 on the default model → the alternate is used once and the `model_call` trace row's `name` is `bedrock`; a validation error → no alternate attempt; `LLM_FALLBACK=none` → the rules fallback of US3
+- [x] T038 [P] [US5] Create `tests/test_bedrock_fallback.py` with fakes: a connection error, 5xx or post-retry 429 on the default model → the alternate is used once and the `model_call` trace row's `name` is `bedrock`; a validation error → no alternate attempt; `LLM_FALLBACK=none` → the rules fallback of US3
 
 ### Implementation for User Story 5
 
-- [ ] T039 [US5] In `app/agents/model.py` add `make_fallback_model(max_tokens)` returning `BedrockModel` for `S.bedrock_model_id` in `S.aws_region` (check the 1.59.0 constructor first); in `app/agents/runner.py` retry once on it when `LLM_FALLBACK=bedrock` and the Akamai call failed with a provider error; record the provider in traces and expose it in `app/health.py`
+- [x] T039 [US5] In `app/agents/model.py` add `make_fallback_model(max_tokens)` returning `BedrockModel` for `S.bedrock_model_id` in `S.aws_region` (check the 1.59.0 constructor first); in `app/agents/runner.py` retry once on it when `LLM_FALLBACK=bedrock` and the Akamai call failed with a provider error; record the provider in traces and expose it in `app/health.py`
 
 ### Polish and hand-off
 
-- [ ] T040 [P] Write `docs/pipeline.md` (≤ 60 lines): the pipeline entry points spec 006 calls, the API surface spec 007 uses, the executors and the deadlock rule, and how to add an agent
-- [ ] T041 [P] Run `specs/005-agents-pipeline-api/quickstart.md` top to bottom on a fresh database and fix anything that does not match its expected results
+- [x] T040 [P] Write `docs/pipeline.md` (≤ 60 lines): the pipeline entry points spec 006 calls, the API surface spec 007 uses, the executors and the deadlock rule, and how to add an agent
+- [x] T041 [P] Run `specs/005-agents-pipeline-api/quickstart.md` top to bottom on a fresh database and fix anything that does not match its expected results
 - [ ] T042 Run `/speckit-converge` until it reports converged, then rebase on `origin/main`, run the full `pytest -q` and the web checks, push, fast-forward `main`, and remove the worktree (PLAN.md §0.8 step 6)
 
 ---
