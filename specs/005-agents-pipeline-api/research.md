@@ -29,7 +29,9 @@ Verified by introspection (`inspect.signature`, dataclass fields, source):
 
 - **Decision**: `OpenAIModel(client_args={"api_key", "base_url": AKAMAI_BASE_URL, "timeout": 30.0, "max_retries": 1}, model_id=MODEL_ID, params={"max_tokens", "temperature": 0.1}, stream=S.llm_streaming)`.
 - **Facts verified live (2026-10-10)**: `GET /v1/models` lists `hackathon-chat`, `hackathon-embedding`, `hackathon-image`; a 5-token completion answers in 0.4–0.9 s; responses carry `x-ratelimit-limit`, `x-ratelimit-remaining`, `x-ratelimit-reset` (seconds).
-- **Open until the smoke test**: whether tool calls and structured output are reliable with `stream=False` vs `True`. Phase 1 measures it (PLAN.md §11.1 decision rules).
+- **Smoke test result (phase 1, `docs/llm_smoke.md`)**: structured output 3/3; tool calls 5/5 with `stream=False` and 5/5 with `stream=True`; decision **stream off** (`LLM_STREAMING=0`, PLAN.md's default on a tie). No `<think>` blocks.
+- **Gateway finding**: the Akamai endpoint rejects `"tools": []` with HTTP 400 ("`tools` must not be an empty array"). Strands 1.59.0 always sends the field, so any agent call with no tools and no structured output failed. Fix: `app/agents/model.py::AkamaiModel` overrides `format_request` to drop `tools`/`tool_choice` when empty. Structured output was unaffected because Strands adds an output tool.
+- **Latency**: varies several-fold between runs on the shared endpoint (a plain completion took 0.5 s once and 6.6 s later). The default per-agent timeouts keep headroom.
 
 ## R3. Structured output and the anti-hallucination validator
 
