@@ -10,6 +10,9 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from app import api, logging_setup
 from app.voice import routes as voice_routes
@@ -38,6 +41,27 @@ app.include_router(voice_routes.router)
 voice_security.install_access_log_redaction()        # tokens never reach the access log (analyze D1)
 voice_security.warn_if_insecure()
 
-# Static dashboard, mounted after every router so /api/* and /twilio/* win (PLAN.md §14.5).
-if (WEB_DIST / "index.html").is_file():
-    app.mount("/", StaticFiles(directory=str(WEB_DIST), html=True), name="web")
+RESERVED = ("api/", "twilio/", "internal/", "mcp", "healthz", "assets/")
+
+
+class SpaStaticFiles(StaticFiles):
+    """web/dist with an app-shell fallback (spec 007 FR-024, contracts/serving.md): a GET for a path that
+    is not a file returns index.html, except API-ish and asset paths, which keep their real 404."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except HTTPException as e:
+            if e.status_code != 404 or scope.get("method") not in ("GET", "HEAD") or path.startswith(RESERVED):
+                raise
+            return await super().get_response("index.html", scope)
+
+
+def mount_web(target: FastAPI, dist: Path) -> None:
+    """Mount the built dashboard at / (call after every router, so /api/* and /twilio/* win)."""
+    if (dist / "index.html").is_file():
+        target.mount("/", SpaStaticFiles(directory=str(dist), html=True), name="web")
+
+
+# Static dashboard, mounted after every router (PLAN.md §14.5).
+mount_web(app, WEB_DIST)

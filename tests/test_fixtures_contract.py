@@ -1,8 +1,12 @@
-"""SC-008: the live API returns every field the dashboard's fixtures have (web/src/fixtures).
+"""The dashboard's fixtures (web/src/fixtures) and the real API stay in sync (PLAN.md §17.1
+test_fixtures_contract.py; spec 005 SC-008, spec 007 FR-026 / SC-003). No network.
 
-The five PLAN.md §8.4 stories are played through the API (AI off); for each scenario's final
-fixture step, and for the list/health/stats/payments/vendors/audit fixtures, every nested key
-path in the fixture must exist in the live response. Extra live keys are allowed.
+1. API ⊇ fixtures: the five PLAN.md §8.4 stories are played through the API (AI off); for each
+   scenario's final fixture step, and for the list/health/stats/payments/vendors/audit fixtures,
+   every nested key path in the fixture must exist in the live response. Extra live keys are allowed.
+2. Every committed fixture file passes the InvoiceDetail shape check (exact keys, masking).
+3. scripts/export_fixtures.py, run now, produces the same files with the same key paths as the
+   committed fixtures, so a stale fixture is caught before the UI is built against it.
 """
 from __future__ import annotations
 
@@ -70,3 +74,44 @@ def test_views_have_every_fixture_field(played, endpoint):
     fixture = json.loads((FIXTURES / VIEWS[endpoint]).read_text())
     missing = sorted(_paths(fixture) - _paths(client.get(endpoint).json()))
     assert missing == [], f"{endpoint}: fixture fields absent from the live API: {missing}"
+
+
+# ---- 2. every committed fixture passes the InvoiceDetail shape check (spec 007 FR-026) -------------
+
+DETAIL_FILES = sorted(FIXTURES.glob("*/*.json"))
+
+
+def test_there_are_detail_fixtures():
+    assert len(DETAIL_FILES) == sum(len(steps) for steps in INDEX.values()) >= 5
+
+
+@pytest.mark.parametrize("path", DETAIL_FILES, ids=lambda p: f"{p.parent.name}/{p.name}")
+def test_committed_fixture_matches_the_invoice_detail_shape(path):
+    from tests.test_invoice_detail_shape import _check_shape
+
+    _check_shape(json.loads(path.read_text()))
+
+
+# ---- 3. the exporter reproduces the committed fixtures' shape (spec 007 FR-026) --------------------
+
+@pytest.fixture(scope="module")
+def exported(tmp_path_factory):
+    from scripts import export_fixtures
+
+    out = tmp_path_factory.mktemp("exported")
+    export_fixtures.main(out)
+    return out
+
+
+def test_exporter_writes_every_committed_file(exported):
+    committed = {p.relative_to(FIXTURES) for p in FIXTURES.rglob("*.json")}
+    produced = {p.relative_to(exported) for p in exported.rglob("*.json")}
+    assert committed - produced == set(), f"committed fixtures the exporter no longer writes: {committed - produced}"
+
+
+@pytest.mark.parametrize("rel", sorted(p.relative_to(FIXTURES) for p in FIXTURES.rglob("*.json")), ids=str)
+def test_exported_file_has_the_committed_key_paths(exported, rel):
+    committed = json.loads((FIXTURES / rel).read_text())
+    fresh = json.loads((exported / rel).read_text())
+    assert _paths(fresh) == _paths(committed), (
+        f"{rel}: re-export changed the shape; run scripts/export_fixtures.py and review the diff")

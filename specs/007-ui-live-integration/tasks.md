@@ -85,7 +85,7 @@ description: "Task list for spec 007: UI Live Integration"
 
 **Independent Test**: `pytest tests/test_spa_fallback.py tests/test_fixtures_contract.py`.
 
-- [ ] T014 [P] [US2] Create `tests/test_spa_fallback.py` using `app.main.mount_web(app, dist)` on a fresh `FastAPI()` with a temporary dist containing `index.html` and `assets/app.js`:
+- [x] T014 [P] [US2] Create `tests/test_spa_fallback.py` using `app.main.mount_web(app, dist)` on a fresh `FastAPI()` with a temporary dist containing `index.html` and `assets/app.js`:
   - `/` and `/assets/app.js` return their files.
   - `/some/client/path` returns `index.html` with 200.
   - `/api/nope`, `/twilio/nope`, `/internal/nope`, `/mcp/x` and `/healthz/x` keep 404.
@@ -93,8 +93,8 @@ description: "Task list for spec 007: UI Live Integration"
   - With no `index.html`, `mount_web` mounts nothing.
 
   It must fail before T015.
-- [ ] T015 [US2] Edit `app/main.py`: add `SpaStaticFiles(StaticFiles)`, whose `get_response` returns `index.html` for a GET that would 404, unless the path starts with `api/`, `twilio/`, `internal/`, `mcp` or `healthz`. Add `mount_web(app, dist)`, which mounts it at `/` only when `dist/index.html` exists. Call it last, in place of the current mount (contracts/serving.md).
-- [ ] T016 [US2] Extend `tests/test_fixtures_contract.py` (research R11):
+- [x] T015 [US2] Edit `app/main.py`: add `SpaStaticFiles(StaticFiles)`, whose `get_response` returns `index.html` for a GET that would 404, unless the path starts with `api/`, `twilio/`, `internal/`, `mcp` or `healthz`. Add `mount_web(app, dist)`, which mounts it at `/` only when `dist/index.html` exists. Call it last, in place of the current mount (contracts/serving.md).
+- [x] T016 [US2] Extend `tests/test_fixtures_contract.py` (research R11):
   - Validate every `web/src/fixtures/<scenario>/*.json` with `tests.test_invoice_detail_shape._check_shape`: exact top-level keys, nested key sets, masking.
   - Run `scripts/export_fixtures.py` into `tmp_path` (the same way `test_export_fixtures_writes_all_scenarios` does) and assert every exported file has the same key paths as the committed fixture of the same name.
   - Keep the existing live-API ⊇ fixture tests.
