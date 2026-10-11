@@ -158,7 +158,7 @@ Single Python project at the repository root (plan.md): `app/`, `app/agents/`, `
 
 - [x] T040 [P] Write `docs/pipeline.md` (≤ 60 lines): the pipeline entry points spec 006 calls, the API surface spec 007 uses, the executors and the deadlock rule, and how to add an agent
 - [x] T041 [P] Run `specs/005-agents-pipeline-api/quickstart.md` top to bottom on a fresh database and fix anything that does not match its expected results
-- [ ] T042 Run `/speckit-converge` until it reports converged, then rebase on `origin/main`, run the full `pytest -q` and the web checks, push, fast-forward `main`, and remove the worktree (PLAN.md §0.8 step 6)
+- [x] T042 Run `/speckit-converge` until it reports converged, then rebase on `origin/main`, run the full `pytest -q` and the web checks, push, fast-forward `main`, and remove the worktree (PLAN.md §0.8 step 6)
 
 ---
 
