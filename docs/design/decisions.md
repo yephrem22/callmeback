@@ -35,7 +35,21 @@ Reviewed `web/snapshots/gallery-*.png` and per-card captures at 1100 px. Top thr
 2. **Amount-vs-history dots stacked on one spot** because the six past amounts sit within a few percent of the median. Fixed: small vertical jitter in both variants so each dot stays visible; the median line and the highlighted invoice are unaffected.
 3. **Long code snippets clipped under the Copy button**. Fixed: snippets wrap.
 
+## Self-critique: prototype P1 (phase 3, 2026-10-10)
+
+Reviewed all 14 scenario steps in both themes at 1024×576 (`web/snapshots/*.png`). Top three issues and fixes:
+
+1. **The dev scenario player covered the case** in every capture and would do the same on a projector if left open. Fixed: `?player=0` hides it; the snapshot script always passes it. On stage the player is simply not opened (it is dev-only and absent from the production build).
+2. **Heartland's final step still painted the requested account red** after the vendor master had been updated to match it. The highlight followed the original `destination.changed` flag rather than the current difference. Fixed: the destination card compares on-file with requested as they are now and, when they match after a change, says "Requested, now verified and on file" in the paid color.
+3. **Six flags with full details pushed the callback panel far below the fold** on the fraud case. Fixed: flag titles and points stay visible; the detail text and the 0-point notes sit behind "Show the evidence for each flag". The stamp, sentence, meter and flag list now fit in the first screen.
+
 Observations carried forward, no change made:
+
+- Fixture timestamps all read 10:00 (deterministic exporter clock), so "Held. The vendor said no on the 10:00 call." is expected here and will show the real time on the live API.
+- Candidate 1B's narrowest segments (+10 at 160 points) have no room for a label; the list below carries the number, so nothing is lost.
+- `can_simulate` is true on the fraud case while CALLING, so the Simulate buttons appear in demo mode as PLAN.md §12.6 intends; on stage they are the fallback if the phone does not ring.
+
+Earlier observations (gallery):
 
 - The Recharts variants (1A, 3A) render fine but add ~140 kB gzipped to the bundle for the whole app; the CSS/SVG variants (1B, 3B) read at least as well at distance. If the gate picks the B variants everywhere, Recharts can be dropped from the production bundle.
 - Audit summaries for `invoice_received`, `extraction_done` and `verification_final` repeat the event name; a richer one-line summary would come from the backend's `audit.list_entries` (spec 003/005), not the UI.

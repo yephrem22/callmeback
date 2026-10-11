@@ -16,6 +16,8 @@ export interface Route {
   theme: ThemeName | null;
   tab: Tab;
   trace: boolean;
+  /** `?player=0` hides the development scenario player (used by the snapshot script). */
+  player: boolean;
 }
 
 function parse(): Route {
@@ -33,13 +35,14 @@ function parse(): Route {
     theme: th === "light" || th === "dark" || th === "system" ? th : null,
     tab: tab === "payments" || tab === "vendors" || tab === "audit" || tab === "devrev" || tab === "demo" ? tab : null,
     trace: q.get("trace") === "1",
+    player: q.get("player") !== "0",
   };
 }
 
 const listeners = new Set<() => void>();
 function notify() { listeners.forEach((l) => l()); }
 
-export function setQuery(partial: Partial<Record<"scenario" | "step" | "theme" | "tab" | "trace", string | number | null>>, replace = true) {
+export function setQuery(partial: Partial<Record<"scenario" | "step" | "theme" | "tab" | "trace" | "player", string | number | null>>, replace = true) {
   const url = new URL(window.location.href);
   for (const [k, v] of Object.entries(partial)) {
     if (v === null || v === undefined || v === "") url.searchParams.delete(k);

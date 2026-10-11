@@ -75,12 +75,12 @@ try {
       for (let i = 0; i < steps.length; i++) {
         const n = String(i + 1).padStart(2, "0");
         for (const theme of themes) {
-          await shoot(`${base}/?scenario=${scenario}&step=${i + 1}&theme=${theme}`, `${scenario}-${n}-${steps[i].step}-${theme}.png`);
+          await shoot(`${base}/?scenario=${scenario}&step=${i + 1}&theme=${theme}&player=0`, `${scenario}-${n}-${steps[i].step}-${theme}.png`);
         }
       }
     }
     if (has("--reduced-motion")) {
-      await shoot(`${base}/?scenario=acme_fraud&step=3&theme=light`, `acme_fraud-03-held-light-reduced-motion.png`, { reducedMotion: true });
+      await shoot(`${base}/?scenario=acme_fraud&step=3&theme=light&player=0`, `acme_fraud-03-held-light-reduced-motion.png`, { reducedMotion: true });
     }
   }
 } finally {

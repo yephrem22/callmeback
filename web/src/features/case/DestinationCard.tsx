@@ -5,12 +5,13 @@ import { CheckLine } from "@/features/case/CheckLine";
 import type { Destination } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+/** What differs *now* between the request and the vendor master. After a verified bank change the master is
+ *  updated, so a request that once differed no longer does; the highlight follows the current state. */
 function changed(d: Destination) {
   const r = d.requested, o = d.on_file;
-  return {
-    routing: !!(d.changed && r && o && r.routing && r.routing !== o.routing),
-    account: !!(d.changed && r && o && r.account_masked && r.account_masked !== o.account_masked),
-  };
+  const routing = !!(r && o && r.routing && r.routing !== o.routing);
+  const account = !!(r && o && r.account_masked && r.account_masked !== o.account_masked);
+  return { routing, account, any: routing || account, wasChanged: d.changed && !(routing || account) && !!r && !!o };
 }
 
 /** Variant A: two rows, on file then requested. */
@@ -30,16 +31,17 @@ export function DestinationRows({ destination: d, className }: { destination: De
       </div>
       {d.requested && (
         <div className="grid grid-cols-[6.5rem_1fr] items-center gap-x-3">
-          <span className={cn("text-sm", d.changed ? "font-medium text-held" : "text-muted-foreground")}>{d.changed ? "Requested" : "In email"}</span>
+          <span className={cn("text-sm", c.any ? "font-medium text-held" : "text-muted-foreground")}>{c.any ? "Requested" : c.wasChanged ? "Requested" : "In email"}</span>
           <span className="flex flex-wrap items-center gap-x-3">
-            <span className={cn("font-medium", d.changed && "text-held")}>{d.requested.bank_name ?? "Unnamed bank"}</span>
+            <span className={cn("font-medium", c.any && "text-held")}>{d.requested.bank_name ?? "Unnamed bank"}</span>
             <CheckLine routing={d.requested.routing} account={d.requested.account_masked} changedRouting={c.routing} changedAccount={c.account} />
-            {d.changed && <ArrowDownUp className="size-4 text-held" aria-label="differs from the vendor record" />}
+            {c.any && <ArrowDownUp className="size-4 text-held" aria-label="differs from the vendor record" />}
           </span>
         </div>
       )}
-      {d.changed && <p className="text-sm text-held">Bank details differ from the vendor record. Money only moves to the account on file after a verified callback.</p>}
-      {!d.changed && d.on_file && <p className="text-sm text-muted-foreground">Same account as the vendor record.</p>}
+      {c.any && <p className="text-sm text-held">Bank details differ from the vendor record. Money only moves to the account on file after a verified callback.</p>}
+      {c.wasChanged && <p className="text-sm text-paid">Verified by callback; the vendor record now matches the request.</p>}
+      {!c.any && !c.wasChanged && d.on_file && <p className="text-sm text-muted-foreground">Same account as the vendor record.</p>}
     </div>
   );
 }
@@ -67,8 +69,8 @@ export function DestinationColumns({ destination: d, className }: { destination:
     <div className={cn("grid gap-3", d.requested ? "grid-cols-2" : "grid-cols-1", className)} role="group" aria-label="Payment destination">
       <DestinationColumn title="On file (vendor master)" line={d.on_file} tone={d.on_file ? "ok" : "none"} />
       {d.requested && (
-        <DestinationColumn title={d.changed ? "Requested in the email" : "In the email (unchanged)"} line={d.requested}
-                           tone={d.changed ? "hot" : "ok"} hotRouting={d.changed && c.routing} hotAccount={d.changed && c.account} />
+        <DestinationColumn title={c.any ? "Requested in the email" : c.wasChanged ? "Requested, now verified and on file" : "In the email (unchanged)"} line={d.requested}
+                           tone={c.any ? "hot" : "ok"} hotRouting={c.routing} hotAccount={c.account} />
       )}
     </div>
   );

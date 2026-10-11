@@ -54,7 +54,7 @@ export function RiskBreakdownChart({ risk, className }: { risk: Risk; className?
 }
 
 /** Variant B: plain CSS segments, no chart library. Reads well from 5 m. */
-export function RiskBreakdownBar({ risk, className }: { risk: Risk; className?: string }) {
+export function RiskBreakdownBar({ risk, className, collapsible = false }: { risk: Risk; className?: string; collapsible?: boolean }) {
   const weighted = risk.flags.filter((f) => flagTone(f) === "weighted");
   const max = Math.max(60, risk.points);
   return (
@@ -74,28 +74,53 @@ export function RiskBreakdownBar({ risk, className }: { risk: Risk; className?: 
           </div>
         ))}
       </div>
-      <FlagList risk={risk} />
+      <FlagList risk={risk} collapsible={collapsible} />
     </div>
   );
 }
 
-export function FlagList({ risk, dense = false }: { risk: Risk; dense?: boolean }) {
+export function FlagList({ risk, dense = false, collapsible = false }: { risk: Risk; dense?: boolean; collapsible?: boolean }) {
   const weighted = risk.flags.filter((f) => flagTone(f) === "weighted");
+  if (!collapsible) {
+    return (
+      <>
+        <ul className={cn("mt-3 space-y-1.5", dense && "space-y-1")}>
+          {weighted.map((f, i) => (
+            <li key={f.code} className="grid grid-cols-[3.25rem_1fr] items-baseline gap-2">
+              <span className="tabular text-right font-semibold" style={{ color: colorFor(i) }}>+{f.points}</span>
+              <span>
+                <span className="font-medium">{f.title}</span>
+                {!dense && <span className="block text-sm text-muted-foreground">{f.detail}</span>}
+              </span>
+            </li>
+          ))}
+          {!weighted.length && <li className="text-sm text-muted-foreground">No risk flags.</li>}
+        </ul>
+        {!dense && <RiskNotes risk={risk} />}
+      </>
+    );
+  }
+  // Collapsible: titles always visible; details and 0-point notes behind a disclosure so the callback stays near the top.
   return (
     <>
-      <ul className={cn("mt-3 space-y-1.5", dense && "space-y-1")}>
+      <ul className="mt-3 space-y-1">
         {weighted.map((f, i) => (
           <li key={f.code} className="grid grid-cols-[3.25rem_1fr] items-baseline gap-2">
             <span className="tabular text-right font-semibold" style={{ color: colorFor(i) }}>+{f.points}</span>
-            <span>
-              <span className="font-medium">{f.title}</span>
-              {!dense && <span className="block text-sm text-muted-foreground">{f.detail}</span>}
-            </span>
+            <span className="font-medium">{f.title}</span>
           </li>
         ))}
         {!weighted.length && <li className="text-sm text-muted-foreground">No risk flags.</li>}
       </ul>
-      {!dense && <RiskNotes risk={risk} />}
+      <details className="mt-2 text-sm">
+        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Show the evidence for each flag</summary>
+        <ul className="mt-2 space-y-1.5">
+          {weighted.map((f) => (
+            <li key={f.code}><span className="font-medium">{f.title}.</span> <span className="text-muted-foreground">{f.detail}</span></li>
+          ))}
+        </ul>
+        <RiskNotes risk={risk} />
+      </details>
     </>
   );
 }
