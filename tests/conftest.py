@@ -12,6 +12,9 @@ os.environ.setdefault("DEMO_MODE", "1")
 os.environ.setdefault("VOICE_MODE", "simulated")
 os.environ.setdefault("STORAGE_MODE", "local")
 os.environ["AI_MODE"] = "off"
+# A real .env (copied into every worktree) must not leak into tests: the phone on file is pinned
+# to the PLAN.md §8 fixture number that the shape tests and fixtures expect.
+os.environ["DEMO_VENDOR_PHONE"] = "+18165550199"
 
 from app import config  # noqa: E402
 
