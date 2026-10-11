@@ -49,6 +49,28 @@ def _voice(token: str, form: dict) -> str:
     return twiml.voice_prompt(ctx, token)
 
 
+def _blank(v: str | None) -> str | None:
+    return v if v not in (None, "") else None
+
+
+def _confidence(v: str | None) -> float | None:
+    try:
+        return float(v) if v not in (None, "") else None
+    except ValueError:
+        return None
+
+
+def _replay_prompt(ver: dict, ctx, token: str) -> str:
+    """A replayed answer webhook (its ?n= is already recorded): re-say the current prompt, change nothing."""
+    if ver["step"] == "awaiting_last4":
+        return twiml.last4_gather(token, twiml.ASK_LAST4)
+    if ver["step"] == "verifying":
+        return twiml.for_last4("CONFIRMED") if ver.get("last4_ok") else twiml.for_first_answer("CONFIRMED_NO_LAST4", ctx, token)
+    if (ver.get("attempts") or 0) == 1:
+        return twiml.for_first_answer("REPROMPT", ctx, token)
+    return twiml.for_first_answer("UNCLEAR", ctx, token)
+
+
 def _answer(token: str, form: dict, attempt: str | None) -> str:
     ver, state = _resolve(token, form)
     if state == "expired":
@@ -56,7 +78,15 @@ def _answer(token: str, form: dict, attempt: str | None) -> str:
     ctx = pipeline.get_call_context(ver["id"])
     if state == "final":
         return twiml.for_final(ver["final_label"], ctx)
-    return twiml.for_last4("NO_INPUT")                # wired to the pipeline in phase 3 (T011)
+    try:
+        n = int(attempt) if attempt else None
+    except ValueError:
+        n = None
+    if n is not None and n <= (ver.get("attempts") or 0):
+        return _replay_prompt(ver, ctx, token)           # analyze U1: never count a retry as an answer
+    decision = pipeline.on_first_answer(ver["id"], _blank(form.get("Digits")), _blank(form.get("SpeechResult")),
+                                        _confidence(form.get("Confidence")))
+    return twiml.for_first_answer(decision, ctx, token)
 
 
 def _last4(token: str, form: dict) -> str:
@@ -65,7 +95,7 @@ def _last4(token: str, form: dict) -> str:
         return twiml.expired()
     if state == "final":
         return twiml.for_final(ver["final_label"], pipeline.get_call_context(ver["id"]))
-    return twiml.for_last4("NO_INPUT")                # wired to the pipeline in phase 3 (T011)
+    return twiml.for_last4(pipeline.on_last4(ver["id"], _blank(form.get("Digits"))))
 
 
 def _status(token: str, form: dict) -> None:

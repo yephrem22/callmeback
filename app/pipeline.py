@@ -27,6 +27,7 @@ from app.intake import eml, merge, regex_extract
 from app.models import CallContext, InvoiceExtraction, RiskResult, VerifierLabel
 from app.policy import engine as policy
 from app.state import RETRYABLE, HoldReason, IllegalTransition, Status, transition
+from app.voice import twiml
 
 log = logging.getLogger("pipeline")
 
@@ -296,13 +297,8 @@ def get_call_context(verification_id: str) -> CallContext:
 
 
 def question_text(ctx: CallContext) -> str:
-    """The Q1 question as asked on the call (PLAN.md §12.3), for the Verifier's prompt."""
-    amount = f"{ctx.amount_cents // 100:,} dollars" if ctx.amount_cents else "an amount"
-    if ctx.kind == "change_case":
-        return f"Did your organization request a change to the {ctx.change_type.replace('_', ' ')} on its account?"
-    if ctx.change_type == "bank_account":
-        return f"Did {ctx.counterparty_name} request this bank change (a payment of {amount} to a new bank account)?"
-    return f"Did {ctx.counterparty_name} send this invoice for {amount}?"
+    """The Q1 the vendor heard, word for word (PLAN.md §12.3), for the Verifier's prompt (spec 006 R10)."""
+    return twiml.q1_text(ctx)
 
 
 def _finalize(ver: dict, label: str, *, last4_ok: int | None = None) -> None:
@@ -488,20 +484,32 @@ def await_verifier(verification_id: str) -> None:
         _finalize(ver, "VERIFIER_DISAGREED")
 
 
+CALL_COMPLETED = "Call completed"
+PROGRESS = {"queued": ("Dialing", "placed"), "initiated": ("Dialing", "placed"),
+            "ringing": ("Ringing", "ringing"), "in-progress": ("Answered", "answered")}
+
+
 def on_call_status(verification_id: str, call_status: str) -> None:
+    """Twilio status callbacks (and the voice fetch's "in-progress"). Idempotent (spec 006 analyze I1):
+    a progress status audits and adds its timeline event only when it advances the step, and
+    `completed` is handled once per verification, so retried callbacks write nothing."""
     ver = _load_active(verification_id)
     if ver is None:
+        return
+    if call_status in PROGRESS:
+        label, step = PROGRESS[call_status]
+        if STEP_ORDER.index(step) <= STEP_ORDER.index(ver["step"]):
+            return
+    elif call_status == "completed" and any(e.get("label") == CALL_COMPLETED for e in ver.get("events") or []):
         return
     c = db.connect()
     try:
         audit.append(ver["subject_id"], _actor(ver), "call_status", {**_sim(ver), "status": call_status}, conn=c)
-        step_for = {"queued": ("Dialing", "placed"), "initiated": ("Dialing", "placed"),
-                    "ringing": ("Ringing", "ringing"), "in-progress": ("Answered", "answered")}
-        if call_status in step_for:
-            label, step = step_for[call_status]
-            advance = STEP_ORDER.index(step) > STEP_ORDER.index(ver["step"])
-            verifications.add_event(c, verification_id, label, step=step if advance else None)
+        if call_status in PROGRESS:
+            verifications.add_event(c, verification_id, label, step=step)
             return
+        if call_status == "completed":
+            verifications.add_event(c, verification_id, CALL_COMPLETED)
     finally:
         c.close()
     if call_status in ("busy", "no-answer", "failed", "canceled"):
@@ -511,18 +519,12 @@ def on_call_status(verification_id: str, call_status: str) -> None:
 
 
 def _after_completed(verification_id: str) -> None:
+    """Twilio can post the answer and the hang-up almost together: wait, re-read, then decide by step."""
     if COMPLETED_GRACE_S:
         time.sleep(COMPLETED_GRACE_S)
     ver = _load_active(verification_id)
-    if ver is None:
-        return
-    if ver["step"] in ("verifying", "done"):
-        c = db.connect()
-        try:
-            verifications.add_event(c, verification_id, "Call ended")
-        finally:
-            c.close()
-        return
+    if ver is None or ver["step"] in ("verifying", "done"):
+        return                                        # await_verifier (or the answer) decides
     _finalize(ver, "UNCLEAR")
 
 
