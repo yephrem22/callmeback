@@ -1,21 +1,21 @@
 """Hash-chained audit log (PLAN.md §13.2, §13.3).
 
 Every entry is sha256(prev_hash + "|" + canonical JSON of the entry body).
-Appends are serialised by a process-wide lock inside BEGIN IMMEDIATE, or join
-the caller's open transaction so a status change and its event commit together.
+Appends are serialised by SQLite's write lock: each runs inside its own BEGIN IMMEDIATE, or joins
+the caller's open (IMMEDIATE) transaction so a status change and its event commit together.
+There is deliberately no Python lock as well: a thread already holding the SQLite write lock would
+wait on it while the lock's holder waited on SQLite (a lock-order deadlock; spec 005 found it).
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import sqlite3
-import threading
 
 from app import db
 from app.ids import now_iso
 from app.masking import masked
 
-_LOCK = threading.Lock()
 GENESIS = "0" * 64
 
 ACTORS = {
@@ -50,32 +50,31 @@ def append(subject_id: str | None, actor: str, event: str, data: dict,
     close = conn is None
     c = conn or db.connect()
     own = close or not c.in_transaction
-    with _LOCK:
-        try:
-            if own:
-                c.execute("BEGIN IMMEDIATE")
-            last = c.execute("SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1").fetchone()
-            seq = (last["seq"] + 1) if last else 1
-            prev = last["hash"] if last else GENESIS
-            ts = now_iso()
-            body = {"seq": seq, "ts": ts, "subject_id": subject_id, "actor": actor, "event": event,
-                    "data": masked(data or {})}
-            h = _hash(prev, body)
-            c.execute(
-                "INSERT INTO audit_log (seq, ts, subject_id, actor, event, data, prev_hash, hash) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (seq, ts, subject_id, actor, event, _canon(body["data"]), prev, h),
-            )
-            if own:
-                c.execute("COMMIT")
-            return seq
-        except BaseException:
-            if own and c.in_transaction:
-                c.execute("ROLLBACK")
-            raise
-        finally:
-            if close:
-                c.close()
+    try:
+        if own:
+            c.execute("BEGIN IMMEDIATE")
+        last = c.execute("SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1").fetchone()
+        seq = (last["seq"] + 1) if last else 1
+        prev = last["hash"] if last else GENESIS
+        ts = now_iso()
+        body = {"seq": seq, "ts": ts, "subject_id": subject_id, "actor": actor, "event": event,
+                "data": masked(data or {})}
+        h = _hash(prev, body)
+        c.execute(
+            "INSERT INTO audit_log (seq, ts, subject_id, actor, event, data, prev_hash, hash) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            (seq, ts, subject_id, actor, event, _canon(body["data"]), prev, h),
+        )
+        if own:
+            c.execute("COMMIT")
+        return seq
+    except BaseException:
+        if own and c.in_transaction:
+            c.execute("ROLLBACK")
+        raise
+    finally:
+        if close:
+            c.close()
 
 
 def verify(conn: sqlite3.Connection | None = None) -> tuple[bool, int | None]:

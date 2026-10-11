@@ -11,11 +11,13 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app import api, logging_setup
 from app.config import S
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WEB_DIST = REPO_ROOT / "web" / "dist"
 
+logging_setup.configure()
 app = FastAPI(title="Call Me Back", docs_url=None, redoc_url=None)
 
 
@@ -23,6 +25,10 @@ app = FastAPI(title="Call Me Back", docs_url=None, redoc_url=None)
 def healthz() -> dict:
     """Liveness (PLAN.md §7.6)."""
     return {"ok": True}
+
+
+# The dashboard API (spec 005). No SPA fallback here: that belongs to spec 007 (analyze A3).
+app.include_router(api.router)
 
 
 # Builder B's throwaway Twilio spike (spec 002 milestone B2, DEMO_MODE only); spec 006 removes it.

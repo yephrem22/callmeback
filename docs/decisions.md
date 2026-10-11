@@ -65,3 +65,12 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 - The OpenAIModel streaming switch is `stream`, not `streaming` as PLAN.md §11.1 says. `streaming=` is silently ignored and streaming stays on (default True). `app/agents/model.py` passes `stream=`.
 - Plugins must call `super().__init__()`: `Plugin.__init__` is where `@hook` methods are discovered. PLAN.md §11.3's `PaymentGuardPlugin.__init__` omits it, which would silently disable the payment guard.
 - The Akamai gateway rejects `"tools": []` (HTTP 400). Strands always sends the field; `AkamaiModel` drops it when an agent has no tools.
+- Plugin hooks fire on direct `agent.tool.<name>()` calls too (research R9), so the red team's direct attempt is blocked by the guard itself (layer `plugin`).
+
+## Spec 005 live check (T037, 2026-10-10)
+
+- **Fixed in spec 003 code**: `audit.append` took a Python lock *and* SQLite's write lock, in opposite orders depending on the caller. A thread inside `db.tx()` waited on the Python lock while the lock's holder waited on `BEGIN IMMEDIATE`: a 5 s stall, then `database is locked`. Only real thread pools show it (the suite uses inline executors). The Python lock is gone; `BEGIN IMMEDIATE` serialises appends. Regression test: `tests/test_audit_concurrency.py`.
+- Live API vs the web fixtures: every key path the fixtures have, the live API has (InvoiceDetail for all five stories, list, health, stats, payments, vendors, audit). Live-only extras are harmless (`trace[].run_id`; analyst and memo filled where fixtures had null).
+- Dashboard on live data (vite dev, `VITE_API_MODE=live`, light and dark): no console errors, no failing API calls.
+- **For spec 007 (UI)**: the held line renders the call time in 24-hour form ("said no on the 20:46 call", from `web/src/lib/decide.ts` `lastEventTime`) while the rest of the UI uses 12-hour times ("Fri 4:52 PM"). The ledger's blocked-reason text (`_chicago_hhmm`) is also 24-hour; align both.
+- `snap.mjs` drives the fixture scenario player, which live mode does not use; the live check used a scratch Playwright script instead. Spec 007 may want a `--live` mode in `snap.mjs`.

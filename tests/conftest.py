@@ -51,14 +51,17 @@ def demo_mode_off(tmp_path) -> Iterator[sqlite3.Connection]:
 
 
 @pytest.fixture(autouse=True)
-def _agent_runtime_defaults():
-    """Every test starts with inline executors, no AI override, and a full rate-limit bucket (spec 005)."""
-    from app import ai_mode, executors
+def _agent_runtime_defaults(monkeypatch):
+    """Every test starts with inline executors, no AI override, a full rate-limit bucket and no
+    health ping over the network (spec 005)."""
+    from app import ai_mode, executors, health
     from app.agents import plugins
 
     executors.use_inline_executors()
     ai_mode.reset_override()
     plugins.reset_bucket()
+    health.reset_cache()
+    monkeypatch.setattr(health, "_ping_models", lambda: (False, None))
     yield
     executors.wait_idle(15.0)            # no background thread may outlive its test (it would write to the next DB)
     ai_mode.reset_override()
