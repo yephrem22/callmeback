@@ -19,8 +19,9 @@ check "GET /api/invoices without credentials" 401 "$(code "$BASE/api/invoices")"
 if [ -n "$USER_" ]; then
   check "GET / with credentials"            200 "$(code -u "$USER_:$PASS" "$BASE/")"
 fi
-tw="$(code -X POST "$BASE/twilio/spike/status")"
-if [ "$tw" = "401" ]; then check "POST /twilio/* not challenged for basic auth" "not-401" 401; else check "POST /twilio/* not challenged for basic auth" "not-401" "not-401"; echo "          (app answered $tw)"; fi
+# /twilio/* passes Caddy without basic auth, and the app's signature check refuses an unsigned
+# request with 403 (spec 006, PLAN.md §12.2). 401 would mean Caddy is challenging Twilio.
+check "POST /twilio/status/<random> unsigned → 403" 403 "$(code -X POST "$BASE/twilio/status/probe-$RANDOM$RANDOM")"
 check "POST /mcp without Bearer"            401 "$(code -X POST "$BASE/mcp")"
 check "GET /internal/change-cases"          404 "$(code "$BASE/internal/change-cases")"
 
