@@ -53,7 +53,7 @@ function DevRevTab() {
   return <p className="text-sm text-muted-foreground">No change cases yet. Cases opened from DevRev Computer appear here with their callback outcome.</p>;
 }
 
-function DemoTab() {
+function DemoTab({ onReset }: { onReset?: () => void }) {
   const { data: health } = useHealth();
   const reset = useAction(postReset);
   const aiMode = useAction(postAiMode);
@@ -79,7 +79,11 @@ function DemoTab() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirm(false)}>Keep everything</Button>
-            <Button onClick={() => { reset.mutate([], { onSuccess: () => toast.success("Demo reset") }); setConfirm(false); }}>Reset demo</Button>
+            <Button onClick={() => {
+              onReset?.();      // clear the selection first, so the refresh never re-fetches a deleted invoice
+              reset.mutate([], { onSuccess: () => toast.success("Demo reset") });
+              setConfirm(false);
+            }}>Reset demo</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -89,7 +93,7 @@ function DemoTab() {
 
 const TITLES: Record<Exclude<Tab, null>, string> = { payments: "Payments", vendors: "Vendors", audit: "Audit log", devrev: "DevRev cases", demo: "Demo controls" };
 
-export function BottomTabs({ tab, onClose }: { tab: Exclude<Tab, null>; onClose: () => void }) {
+export function BottomTabs({ tab, onClose, onReset }: { tab: Exclude<Tab, null>; onClose: () => void; onReset?: () => void }) {
   return (
     <section className="border-t border-border bg-card" aria-label={TITLES[tab]}>
       <div className="flex items-center justify-between px-4 pt-2">
@@ -101,7 +105,7 @@ export function BottomTabs({ tab, onClose }: { tab: Exclude<Tab, null>; onClose:
         {tab === "vendors" && <VendorsTab />}
         {tab === "audit" && <AuditTab />}
         {tab === "devrev" && <DevRevTab />}
-        {tab === "demo" && <DemoTab />}
+        {tab === "demo" && <DemoTab onReset={onReset} />}
       </ScrollArea>
     </section>
   );

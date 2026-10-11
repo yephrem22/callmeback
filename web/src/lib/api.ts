@@ -1,10 +1,12 @@
 // API client with two modes (PLAN.md §14.5): VITE_API_MODE=fixtures | live.
-// Spec 007 flips the mode and adds refetchInterval; the hooks below are the only data entry points.
+// Live mode polls per PLAN.md §14.9 (spec 007); the hooks below are the only data entry points.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
+import { describeError } from "@/lib/errors";
 import { fixtureStore, useFixtureVersion } from "@/lib/fixtures";
 import type {
-  AuditView, Health, InvoiceDetail, InvoiceListRow, PaymentsView, ScenarioName, Stats, VendorView,
+  AuditView, ChangeCase, Health, InvoiceDetail, InvoiceListRow, PaymentsView, ScenarioName, Stats, VendorView,
 } from "@/lib/types";
 import { SAMPLE_FOR_SCENARIO } from "@/lib/types";
 
@@ -37,6 +39,10 @@ export const getPayments = (): Promise<PaymentsView> => (isFixtures ? Promise.re
 export const getVendors = (): Promise<VendorView[]> => (isFixtures ? Promise.resolve(fixtureStore.vendors()) : http("/api/vendors"));
 export const getAudit = (subjectId?: string): Promise<AuditView> =>
   isFixtures ? Promise.resolve(fixtureStore.audit()) : http(`/api/audit${subjectId ? `?subject_id=${subjectId}` : ""}`);
+// No change-case fixtures exist; fixtures mode shows the empty DevRev tab.
+export const getChangeCases = (): Promise<ChangeCase[]> => (isFixtures ? Promise.resolve([]) : http("/api/change-cases"));
+export const getChangeCase = (id: string): Promise<ChangeCase> =>
+  isFixtures ? Promise.reject(new Error("404: unknown change case")) : http(`/api/change-cases/${id}`);
 
 // ---- writes (fixtures mode advances the matching scenario or no-ops) ------------
 
@@ -80,6 +86,14 @@ export const postAiMode = (mode: "live" | "off"): Promise<unknown> =>
 
 // ---- hooks ---------------------------------------------------------------------
 // In fixtures mode the store version is part of the key so the UI re-renders when a step changes.
+// In live mode every query polls (PLAN.md §14.9); fixtures mode never polls and never calls /api.
+
+const TERMINAL = new Set(["RELEASED", "HELD", "FAILED"]);
+const poll = (ms: number): number | false => (isFixtures ? false : ms);
+const POLL = { list: 2000, caseLive: 1000, caseDone: 5000, health: 15000, tab: 2000 } as const;
+
+/** True for a 404 from the API: the record no longer exists (e.g. cleared by a demo reset). */
+export const isGone = (e: unknown): boolean => e instanceof Error && /^404\b/.test(e.message);
 
 function useVersionKey(): number {
   // Always subscribe (hooks must be unconditional); in live mode the store never changes, so the key stays 0.
@@ -89,24 +103,54 @@ function useVersionKey(): number {
 
 export function useInvoices() {
   const v = useVersionKey();
-  return useQuery({ queryKey: ["invoices", v], queryFn: getInvoices });
+  return useQuery({ queryKey: ["invoices", v], queryFn: getInvoices, refetchInterval: poll(POLL.list) });
 }
 export function useInvoice(id: string | null) {
   const v = useVersionKey();
-  return useQuery({ queryKey: ["invoice", id, v], queryFn: () => getInvoice(id!), enabled: !!id });
+  return useQuery({
+    queryKey: ["invoice", id, v], queryFn: () => getInvoice(id!), enabled: !!id,
+    retry: (n, e) => !isGone(e) && n < 1,
+    // every 1 s until the case is terminal, then every 5 s; a vanished invoice (404) stops polling
+    refetchInterval: (q) =>
+      isGone(q.state.error) ? false : poll(TERMINAL.has(q.state.data?.status ?? "") ? POLL.caseDone : POLL.caseLive),
+  });
 }
-export function useHealth() { const v = useVersionKey(); return useQuery({ queryKey: ["health", v], queryFn: getHealth }); }
-export function useStats() { const v = useVersionKey(); return useQuery({ queryKey: ["stats", v], queryFn: getStats }); }
-export function usePayments() { const v = useVersionKey(); return useQuery({ queryKey: ["payments", v], queryFn: getPayments }); }
-export function useVendors() { const v = useVersionKey(); return useQuery({ queryKey: ["vendors", v], queryFn: getVendors }); }
-export function useAudit(subjectId?: string) { const v = useVersionKey(); return useQuery({ queryKey: ["audit", subjectId, v], queryFn: () => getAudit(subjectId) }); }
+export function useHealth() {
+  const v = useVersionKey();
+  return useQuery({ queryKey: ["health", v], queryFn: getHealth, refetchInterval: poll(POLL.health) });
+}
+// Tab data polls only while its tab is mounted (TanStack stops polling unobserved queries).
+export function useStats() { const v = useVersionKey(); return useQuery({ queryKey: ["stats", v], queryFn: getStats, refetchInterval: poll(POLL.tab) }); }
+export function usePayments() { const v = useVersionKey(); return useQuery({ queryKey: ["payments", v], queryFn: getPayments, refetchInterval: poll(POLL.tab) }); }
+export function useVendors() { const v = useVersionKey(); return useQuery({ queryKey: ["vendors", v], queryFn: getVendors, refetchInterval: poll(POLL.tab) }); }
+export function useAudit(subjectId?: string) {
+  const v = useVersionKey();
+  return useQuery({ queryKey: ["audit", subjectId, v], queryFn: () => getAudit(subjectId), refetchInterval: poll(POLL.tab) });
+}
+export function useChangeCases() {
+  return useQuery({ queryKey: ["change-cases"], queryFn: getChangeCases, refetchInterval: poll(POLL.tab) });
+}
+export function useChangeCase(id: string | null) {
+  return useQuery({ queryKey: ["change-case", id], queryFn: () => getChangeCase(id!), enabled: !!id && !isFixtures,
+                    refetchInterval: poll(POLL.tab) });
+}
 
 export function useInvalidateAll() {
   const qc = useQueryClient();
   return () => qc.invalidateQueries();
 }
 
+/** A user action. Errors say what happened and what to do next (PLAN.md §14.6); either way the
+ *  views refresh, so a stale screen corrects itself on the next poll. */
 export function useAction<TArgs extends unknown[], TResult>(fn: (...args: TArgs) => Promise<TResult>) {
   const invalidate = useInvalidateAll();
-  return useMutation({ mutationFn: (args: TArgs) => fn(...args), onSuccess: () => { void invalidate(); } });
+  return useMutation({
+    mutationFn: (args: TArgs) => fn(...args),
+    onSuccess: () => { void invalidate(); },
+    onError: (e) => {
+      const { title, description } = describeError(e);
+      toast.error(title, { description });
+      void invalidate();
+    },
+  });
 }

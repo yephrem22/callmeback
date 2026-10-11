@@ -42,7 +42,7 @@ No NEEDS CLARIFICATION remained after surveying the merged code (eb607fc): `web/
 
 ## R9. 12-hour call times (spec 005 T037 note)
 
-- **Decision**: `decide.ts` formats the call time as `h:mm AM/PM` in the browser's locale time (`toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})`), e.g. "Held. The vendor said no on the 8:46 PM call." `app/ledger.py::_chicago_hhmm` returns the same 12-hour form in Chicago time, so the red-team reason matches.
+- **Decision**: every UI time goes through `lib/format.ts::formatChicago`, whose `"time"` style is now 12-hour Chicago time (it was `hour12: false`), so the call time reads `h:mm AM/PM`, e.g. "Held. The vendor said no on the 8:46 PM call." `app/ledger.py::_chicago_hhmm` returns the same 12-hour form in Chicago time, so the red-team reason matches.
 - **Rationale**: the rest of the UI uses 12-hour times ("Fri 4:52 PM"); PLAN.md's "10:42" example is format-neutral.
 
 ## R10. SPA fallback (FR-024)

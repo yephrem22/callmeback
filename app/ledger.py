@@ -45,7 +45,7 @@ def _chicago_hhmm(ts: str | None) -> str:
         return "unknown time"
     try:
         dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-        return dt.astimezone(CHICAGO).strftime("%H:%M")
+        return dt.astimezone(CHICAGO).strftime("%I:%M %p").lstrip("0")   # "8:46 PM", like the dashboard (spec 007 R9)
     except ValueError:
         return ts
 

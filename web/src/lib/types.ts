@@ -118,6 +118,29 @@ export interface AuditView {
   entries: (AuditRow & { subject_id: string | null })[]; chain_ok: boolean; broken_at: number | null;
 }
 
+// GET /api/change-cases[/{id}] (spec 005 `_case_view`; spec 007 data-model.md)
+export type RequestedChange = "billing_contact" | "payment_details" | "remit_address" | "admin_contact" | "other";
+export type ChangeCaseStatus = "OPEN" | "CALLING" | "CONFIRMED" | "DENIED" | "UNCLEAR" | "NO_ANSWER" | "CLOSED";
+
+export interface ChangeCaseVerification {
+  id: string; source: "twilio" | "simulated" | null; step: string | null; phone_masked: string | null;
+  events: VerificationEvent[]; final_label: FinalLabel | null;
+}
+
+export interface ChangeCase {
+  id: string;
+  account_ref: { id?: string; name?: string; source_ref?: unknown };
+  requested_change: RequestedChange;
+  sender_email: string;
+  request_excerpt: string;                 // ≤ 500 chars
+  signals: unknown[];
+  status: ChangeCaseStatus;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  verification: ChangeCaseVerification | null;
+}
+
 export type ScenarioName = "acme_normal" | "acme_fraud" | "heartland_bank_change" | "prairie_review" | "unknown_vendor";
 
 export interface ScenarioStep { step: string; file: string; status: Status; hold_reason: HoldReason | null; invoice_id: string }

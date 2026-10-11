@@ -8,9 +8,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useHealth } from "@/lib/api";
 import { useTheme } from "@/lib/theme";
 
-function Dot({ ok, label, icon: Icon, detail }: { ok: boolean | null; label: string; icon: typeof Database; detail: string }) {
-  const tone = ok === null ? "bg-muted-foreground" : ok ? "bg-paid" : "bg-held";
-  const word = ok === null ? "unknown" : ok ? "ok" : "down";
+function Dot({ ok, label, icon: Icon, detail, unreachable }: {
+  ok: boolean | null; label: string; icon: typeof Database; detail: string; unreachable?: string;
+}) {
+  const tone = unreachable ? "bg-held" : ok === null ? "bg-muted-foreground" : ok ? "bg-paid" : "bg-held";
+  const word = unreachable ? "unreachable" : ok === null ? "unknown" : ok ? "ok" : "down";
+  const tip = unreachable ?? detail;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -20,13 +23,17 @@ function Dot({ ok, label, icon: Icon, detail }: { ok: boolean | null; label: str
           <span className="hidden lg:inline">{label}</span>
         </span>
       </TooltipTrigger>
-      <TooltipContent>{label}: {word}. {detail}</TooltipContent>
+      <TooltipContent>{label}: {word}. {tip}</TooltipContent>
     </Tooltip>
   );
 }
 
 export function Header() {
-  const { data: h } = useHealth();
+  const { data: h, isError, error } = useHealth();
+  // Health can fail on its own; the queue and case poll independently (spec 007 R8).
+  const down = isError
+    ? `Couldn't reach /api/health (${error instanceof Error ? error.message : "no response"}). The queue and case keep updating on their own.`
+    : undefined;
   const { theme, setTheme } = useTheme();
   const ThemeIcon = theme === "dark" ? Moon : theme === "system" ? Monitor : Sun;
   const latency = h?.model.latency_ms != null ? `${(h.model.latency_ms / 1000).toFixed(1)} s` : null;
@@ -40,11 +47,11 @@ export function Header() {
 
       <div className="ml-auto flex items-center gap-4">
         <div className="flex items-center gap-3">
-          <Dot ok={h ? h.db : null} label="Database" icon={Database} detail="SQLite in WAL mode." />
+          <Dot ok={h ? h.db : null} label="Database" icon={Database} detail="SQLite in WAL mode." unreachable={down} />
           <Dot ok={h ? h.model.ok : null} label={latency ? `Inference ${latency}` : "Inference"} icon={Cpu}
-               detail={latency ? `Akamai inference, median of recent model calls: ${latency}.` : "Akamai inference: no model calls yet."} />
-          <Dot ok={h ? h.twilio.configured : null} label="Twilio" icon={Phone} detail={h?.twilio.configured ? "Live calls enabled." : "Simulated line; answer with the demo controls."} />
-          <Dot ok={h ? h.storage.ok : null} label="Storage" icon={HardDrive} detail="Evidence locker." />
+               detail={latency ? `Akamai inference, median of recent model calls: ${latency}.` : "Akamai inference: no model calls yet."} unreachable={down} />
+          <Dot ok={h ? h.twilio.configured : null} label="Twilio" icon={Phone} detail={h?.twilio.configured ? "Live calls enabled." : "Simulated line; answer with the demo controls."} unreachable={down} />
+          <Dot ok={h ? h.storage.ok : null} label="Storage" icon={HardDrive} detail="Evidence locker." unreachable={down} />
         </div>
 
         <span
@@ -52,7 +59,7 @@ export function Header() {
           aria-live="polite"
         >
           <Sparkles className="size-4" aria-hidden />
-          {h?.ai_mode === "live" ? "AI: live" : "AI: off (rules only)"}
+          {down ? "AI: unknown" : h?.ai_mode === "live" ? "AI: live" : "AI: off (rules only)"}
         </span>
 
         <DropdownMenu>

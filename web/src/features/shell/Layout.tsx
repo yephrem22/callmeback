@@ -11,7 +11,7 @@ import { QueueList } from "@/features/queue/QueueList";
 import { Header } from "@/features/shell/Header";
 import { BottomTabs } from "@/features/shell/Tabs";
 import { TraceSheet } from "@/features/trace/TraceSheet";
-import { isFixtures, useHealth, useInvoice } from "@/lib/api";
+import { isFixtures, isGone, useHealth, useInvoice } from "@/lib/api";
 import { fixtureStore, useFixtureVersion } from "@/lib/fixtures";
 import { isDev, setQuery, type Route, type Tab } from "@/lib/route";
 
@@ -41,7 +41,10 @@ export function Layout({ route }: { route: Route }) {
     return liveSelected;
   }, [route.scenario, liveSelected]);
 
-  const { data: detail } = useInvoice(selectedId);
+  const { data: loaded, error: detailError } = useInvoice(selectedId);
+  // Live mode: a selected invoice that vanished (a reset from another browser) shows as no selection;
+  // its query stops polling on the 404 (lib/api.ts), and the next pick replaces it.
+  const detail = !isFixtures && isGone(detailError) ? undefined : loaded;
 
   const onSelect = (id: string) => {
     if (isFixtures) { const s = fixtureStore.scenarioForInvoice(id); if (s) setQuery({ scenario: s, step: fixtureStore.stepOf(s) }); }
@@ -77,7 +80,7 @@ export function Layout({ route }: { route: Route }) {
         </main>
       </div>
 
-      {route.tab && <BottomTabs tab={route.tab} onClose={() => setQuery({ tab: null })} />}
+      {route.tab && <BottomTabs tab={route.tab} onClose={() => setQuery({ tab: null })} onReset={() => setLiveSelected(null)} />}
 
       <nav className="flex h-11 items-center gap-1 border-t border-border px-2" aria-label="Tabs">
         {TABS.filter((t) => t.id !== "demo" || health?.demo_mode).map((t) => (

@@ -16,7 +16,7 @@ export function formatChicago(iso: string | null | undefined, style: "time" | "d
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   const f: Intl.DateTimeFormatOptions =
-    style === "time" ? { hour: "numeric", minute: "2-digit", hour12: false } :
+    style === "time" ? { hour: "numeric", minute: "2-digit" } :          // 12-hour, like the ledger (spec 007 R9)
     style === "date" ? { month: "short", day: "numeric" } :
     style === "weekday-time" ? { weekday: "short", hour: "numeric", minute: "2-digit" } :
     { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" };
