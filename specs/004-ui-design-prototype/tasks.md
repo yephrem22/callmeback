@@ -70,7 +70,7 @@ Single Vite app in `web/` per plan.md; features by panel under `web/src/features
 
 ## Human gate (U2): both builders pick the winners (US2) — no code
 
-- [ ] T031 [US2] The team reviews `/gallery` for 15 minutes and fills the table in `docs/design/decisions.md`: for each slot of PLAN.md §14.3 (decision, risk, destination, callback, evidence, queue, trace, tabs) the winning candidate number, the winning variant (A or B) and a one-line reason; plus a "Contract requests" list (empty if none). Losing candidates stay in the gallery.
+- [x] T031 [US2] The team reviews `/gallery` for 15 minutes and fills the table in `docs/design/decisions.md`: for each slot of PLAN.md §14.3 (decision, risk, destination, callback, evidence, queue, trace, tabs) the winning candidate number, the winning variant (A or B) and a one-line reason; plus a "Contract requests" list (empty if none). Losing candidates stay in the gallery.
 
 ---
 

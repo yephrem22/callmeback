@@ -4,20 +4,22 @@
 
 Open `http://localhost:5173/gallery` (dev server, light theme first, then dark). Spend 15 minutes together. For each slot, write the winning candidate number, the variant (A or B) and one line on why. The prototype (phase 3) uses only what is recorded here; losing candidates stay in the gallery.
 
+Reviewed 2026-10-10 evening by the team (Yoseph with Sahaj and Shubhangi). Picks per candidate: 1B, 2A, 3A, 4A, 5B, 6B, 7B, 8B, 9B, 10A, 11A, 12A, 13A, 14A.
+
 | Layout slot (PLAN.md §14.3) | Candidates to choose from | Winner | Variant | Reason |
 |---|---|---|---|---|
-| Decision (stamp + sentence) | 12 Decision stamp | | | |
-| Risk ("Why: N risk points") | 1 Risk breakdown bar, 2 Risk meter (may combine: meter in header, breakdown below) | | | |
-| Amount context | 3 Amount vs history | | | |
-| Lookalike callout | 4 Lookalike diff | | | |
-| Destination | 5 Destination card | | | |
-| Callback progress | 6 Callback stepper | | | |
-| Callback answer | 7 Transcript bubble | | | |
-| Evidence: audit | 9 Audit chain list | | | |
-| Agent trace sheet | 8 Agent trace waterfall | | | |
-| Queue | 13 Queue rows | | | |
-| Payments tab | 10 KPI strip, 11 Payments ledger table | | | |
-| Vendors tab | 14 Vendor change history | | | |
+| Decision (stamp + sentence) | 12 Decision stamp | 12 | A outlined | Reads as a rubber stamp; the filled variant competes with the status chips |
+| Risk ("Why: N risk points") | 1 Risk breakdown bar, 2 Risk meter | 2 + 1 | 2A meter above, 1B CSS segments and list below | Meter gives the 5 m read; the CSS breakdown carries the detail without the chart library |
+| Amount context | 3 Amount vs history | 3 | A Recharts strip | Axis ticks make the scale explicit (keeps Recharts in the bundle) |
+| Lookalike callout | 4 Lookalike diff | 4 | A stacked | The two domains line up character for character |
+| Destination | 5 Destination card | 5 | B two columns | On file vs requested side by side; the hot column is unmistakable |
+| Callback progress | 6 Callback stepper | 6 | B vertical timeline | Timestamps and the asked question fit; never wraps |
+| Callback answer | 7 Transcript bubble | 7 | B row | Compact under the timeline; chips stay readable |
+| Evidence: audit | 9 Audit chain list | 9 | B timeline | Hash links show the chain visually |
+| Agent trace sheet | 8 Agent trace waterfall | 8 | B grouped list | Groups per agent read better in a narrow sheet than bars |
+| Queue | 13 Queue rows | 13 | A two lines | Amount and status both visible at 280 px |
+| Payments tab | 10 KPI strip, 11 Payments ledger table | 10 + 11 | 10A tiles, 11A table | Finance-familiar table under four big numbers |
+| Vendors tab | 14 Vendor change history | 14 | A cards | Before and after read as one event |
 
 Rules of thumb while choosing: readable from 5 m at 1024×576; status always has a word and an icon; charts only where they add something a sentence cannot.
 
