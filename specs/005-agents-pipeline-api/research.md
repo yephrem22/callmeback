@@ -45,7 +45,9 @@ Verified by introspection (`inspect.signature`, dataclass fields, source):
 
 ## R5. Executors and the deadlock rule
 
-- **Decision**: `app/pipeline.py` owns `JOBS = ThreadPoolExecutor(8, thread_name_prefix="jobs")` and `AGENTS = ThreadPoolExecutor(4, thread_name_prefix="agents")`. `run_agent()` asserts it is not running on an `agents-` thread before waiting on an AGENTS future; `start_agent()` submits to JOBS. Tests can swap both for a synchronous executor (`pipeline.use_inline_executors()`) so flows are deterministic.
+- **Decision**: `app/executors.py` owns `JOBS = ThreadPoolExecutor(8, thread_name_prefix="jobs")` and `AGENTS = ThreadPoolExecutor(4, thread_name_prefix="agents")`, and `app/pipeline.py` re-exports them (analyze A1: this avoids a pipeline ↔ runner import cycle while keeping "two executors, nothing else spawns threads"). `run_agent()` asserts it is not running on an `agents-` thread before waiting on an AGENTS future; `start_agent()` submits to JOBS. Tests can swap both for a synchronous executor (`use_inline_executors()`) so flows are deterministic.
+- **Timeouts free their thread (analyze C2)**: a timed-out run's `threading.Event` is passed to Strands as `cancel_signal` and checked by every closure-bound tool, so a late run stops instead of acting after its fallback, and only 4 agent threads can never all be held by stuck runs.
+- **One retry policy (analyze C1)**: Strands 1.59.0 agents default to `ModelRetryStrategy(max_attempts=6, initial_delay=4, max_delay=240)` on `ModelThrottledException`. Every agent passes `retry_strategy=None`, and `RateLimitPlugin` is the only retry policy (at most 3, honouring `x-ratelimit-reset` from the exception's cause).
 - **Rationale**: PLAN.md §6; a runtime assert turns a deadlock into a loud error.
 
 ## R6. Voice functions before spec 006 lands
