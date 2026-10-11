@@ -55,7 +55,8 @@ specs/005-agents-pipeline-api/
 
 app/
 ├── agents/ model.py plugins.py runner.py fallbacks.py intake_agent.py analyst.py verifier.py payments.py redteam.py
-├── pipeline.py        # executors, submit/ingest job, fast path, §7.5 handlers, §12.5/§12.6 logic
+├── executors.py       # JOBS and AGENTS, the only thread pools (re-exported by pipeline.py)
+├── pipeline.py        # submit/ingest job, fast path, §7.5 handlers, §12.5/§12.6 logic
 ├── voice_port.py      # place_call/cancel_call/classify_answer adapters with stubs until spec 006 (R6)
 ├── ai_mode.py         # effective AI mode + runtime override (R10)
 ├── health.py          # /api/health document and latency cache (R7)
