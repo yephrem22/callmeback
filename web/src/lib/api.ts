@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { describeError } from "@/lib/errors";
 import { fixtureStore, useFixtureVersion } from "@/lib/fixtures";
 import type {
-  AuditView, ChangeCase, Health, InvoiceDetail, InvoiceListRow, PaymentsView, ScenarioName, Stats, VendorView,
+  AuditView, Health, InvoiceDetail, InvoiceListRow, PaymentsView, ScenarioName, Stats, VendorView,
 } from "@/lib/types";
 import { SAMPLE_FOR_SCENARIO } from "@/lib/types";
 
@@ -39,10 +39,6 @@ export const getPayments = (): Promise<PaymentsView> => (isFixtures ? Promise.re
 export const getVendors = (): Promise<VendorView[]> => (isFixtures ? Promise.resolve(fixtureStore.vendors()) : http("/api/vendors"));
 export const getAudit = (subjectId?: string): Promise<AuditView> =>
   isFixtures ? Promise.resolve(fixtureStore.audit()) : http(`/api/audit${subjectId ? `?subject_id=${subjectId}` : ""}`);
-// No change-case fixtures exist; fixtures mode shows the empty DevRev tab.
-export const getChangeCases = (): Promise<ChangeCase[]> => (isFixtures ? Promise.resolve([]) : http("/api/change-cases"));
-export const getChangeCase = (id: string): Promise<ChangeCase> =>
-  isFixtures ? Promise.reject(new Error("404: unknown change case")) : http(`/api/change-cases/${id}`);
 
 // ---- writes (fixtures mode advances the matching scenario or no-ops) ------------
 
@@ -126,13 +122,6 @@ export function useVendors() { const v = useVersionKey(); return useQuery({ quer
 export function useAudit(subjectId?: string) {
   const v = useVersionKey();
   return useQuery({ queryKey: ["audit", subjectId, v], queryFn: () => getAudit(subjectId), refetchInterval: poll(POLL.tab) });
-}
-export function useChangeCases() {
-  return useQuery({ queryKey: ["change-cases"], queryFn: getChangeCases, refetchInterval: poll(POLL.tab) });
-}
-export function useChangeCase(id: string | null) {
-  return useQuery({ queryKey: ["change-case", id], queryFn: () => getChangeCase(id!), enabled: !!id && !isFixtures,
-                    refetchInterval: poll(POLL.tab) });
 }
 
 export function useInvalidateAll() {

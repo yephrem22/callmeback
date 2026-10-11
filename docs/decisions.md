@@ -83,3 +83,10 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 - **No answer**: ringing 2.1 s → HELD(NO_ANSWER) at 25.9 s (the 25 s ring timeout); Retry offered.
 - After the three calls: 3 calls placed, 1 payment ($4,120), $97,500 held, audit chain OK, no errors in the app log. `Polly.Joanna-Neural` played fine; no fallback needed.
 - **Bug found live, fixed**: the voice fetch and Twilio's own `answered` callback arrive together, and both wrote "Answered" plus a `call_status` audit row; the timeline append itself was a non-atomic read-modify-write that could drop events. `pipeline.on_call_status` now checks and writes in one transaction, and `verifications.add_event` appends inside one. Regression tests: `tests/test_voice_concurrency.py` (reproduced 4×, 3× and 4 lost events before the fix).
+
+## Scope change: DevRev track dropped (2026-10-11)
+
+- The team is no longer entering the DevRev challenge, so spec 008 (DevRev connector) is not being built. We are entering the Akamai, Flex and AWS (Strands) tracks.
+- The dashboard's DevRev cases tab was removed (bottom bar, panel, route, client reads and types, and the step in the `snap.mjs --live` story). The reset dialog no longer mentions DevRev cases.
+- The backend change-case API and the change-case callback path (specs 005 and 006) stay in place and tested; nothing in the UI uses them now.
+- PLAN.md §19.1's 2:35 DevRev beat is dropped from the pitch.

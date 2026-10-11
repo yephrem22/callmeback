@@ -6,7 +6,7 @@ import { SCENARIOS } from "@/lib/types";
 
 export const isDev = import.meta.env.DEV;
 
-export type Tab = "payments" | "vendors" | "audit" | "devrev" | "demo" | null;
+export type Tab = "payments" | "vendors" | "audit" | "demo" | null;
 export type ThemeName = "light" | "dark" | "system";
 
 export interface Route {
@@ -33,7 +33,7 @@ function parse(): Route {
     scenario,
     step: Number.isFinite(stepRaw) && stepRaw > 0 ? Math.floor(stepRaw) : null,
     theme: th === "light" || th === "dark" || th === "system" ? th : null,
-    tab: tab === "payments" || tab === "vendors" || tab === "audit" || tab === "devrev" || tab === "demo" ? tab : null,
+    tab: tab === "payments" || tab === "vendors" || tab === "audit" || tab === "demo" ? tab : null,
     trace: q.get("trace") === "1",
     player: q.get("player") !== "0",
   };

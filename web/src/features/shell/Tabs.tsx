@@ -1,4 +1,4 @@
-// Bottom tab panels (PLAN.md §14.9): Payments (10A + 11A), Vendors (14A), Audit log (9B), DevRev cases, Demo controls.
+// Bottom tab panels (PLAN.md §14.9): Payments (10A + 11A), Vendors (14A), Audit log (9B), Demo controls.
 import { X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { ChangeCases } from "@/features/devrev/ChangeCases";
 import { AuditTimeline } from "@/features/evidence/AuditList";
 import { KpiTiles } from "@/features/payments/KpiStrip";
 import { LedgerTable } from "@/features/payments/LedgerTable";
@@ -91,7 +90,7 @@ function DemoTab({ onReset, selected }: { onReset?: () => void; selected?: Invoi
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset the demo?</DialogTitle>
-            <DialogDescription>Wipes invoices, calls, payments and the audit chain, and reseeds the vendors. DevRev cases are kept.</DialogDescription>
+            <DialogDescription>Wipes invoices, calls, payments and the audit chain, and reseeds the vendors.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirm(false)}>Keep everything</Button>
@@ -107,7 +106,7 @@ function DemoTab({ onReset, selected }: { onReset?: () => void; selected?: Invoi
   );
 }
 
-const TITLES: Record<Exclude<Tab, null>, string> = { payments: "Payments", vendors: "Vendors", audit: "Audit log", devrev: "DevRev cases", demo: "Demo controls" };
+const TITLES: Record<Exclude<Tab, null>, string> = { payments: "Payments", vendors: "Vendors", audit: "Audit log", demo: "Demo controls" };
 
 export function BottomTabs({ tab, onClose, onReset, selected }: {
   tab: Exclude<Tab, null>; onClose: () => void; onReset?: () => void; selected?: InvoiceDetail | null;
@@ -122,7 +121,6 @@ export function BottomTabs({ tab, onClose, onReset, selected }: {
         {tab === "payments" && <PaymentsTab />}
         {tab === "vendors" && <VendorsTab />}
         {tab === "audit" && <AuditTab />}
-        {tab === "devrev" && <ChangeCases />}
         {tab === "demo" && <DemoTab onReset={onReset} selected={selected} />}
       </ScrollArea>
     </section>

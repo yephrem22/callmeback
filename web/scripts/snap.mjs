@@ -150,9 +150,7 @@ async function liveStory(theme) {
   await tab("Vendors");
   await page.getByText(/verified by callback/i).first().waitFor({ timeout: 10000 });
   await shot("vendors-heartland-updated");
-  await tab("DevRev cases");                                                      // 2:35
-  await shot("devrev-cases");
-  await tab("DevRev cases");
+  await tab("Vendors");                                                           // close the panel
   await shot("header-running-on");                                                // 2:50
 
   if (errors.length) problems.push({ file: `live story (${theme})`, errors });

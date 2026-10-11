@@ -21,7 +21,6 @@ const TABS: { id: Exclude<Tab, null>; label: string }[] = [
   { id: "payments", label: "Payments" },
   { id: "vendors", label: "Vendors" },
   { id: "audit", label: "Audit log" },
-  { id: "devrev", label: "DevRev cases" },
   { id: "demo", label: "Demo controls" },
 ];
 
