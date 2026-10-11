@@ -16,7 +16,8 @@ No NEEDS CLARIFICATION remained after reading PLAN.md §12, the merged spec 005 
 
 ## R3. Signature validation
 
-- **Decision**: `RequestValidator(S.twilio_auth_token).validate(url, dict(form), request.headers.get("X-Twilio-Signature", ""))` with `url = S.public_base_url + request.url.path + ("?" + query if query else "")`. An empty auth token rejects every request. `TWILIO_VALIDATE_SIGNATURE=0` skips the check for local tunnelling only, logs a warning on every request, and is refused (treated as 1) when `VOICE_MODE=twilio` and `DEMO_MODE=0`. On failure: HTTP 403 and audit `webhook_rejected` (actor `twilio`, subject null, data `{route, reason, token_sha8}`), written in the threadpool.
+- **Decision**: `RequestValidator(S.twilio_auth_token).validate(url, dict(form), request.headers.get("X-Twilio-Signature", ""))` with `url = S.public_base_url + request.url.path + ("?" + query if query else "")`. An empty auth token rejects every request. `TWILIO_VALIDATE_SIGNATURE=0` is honored **only when `VOICE_MODE=simulated`** (no real calls exist, so there is nothing to confirm), with a warning per request; with `VOICE_MODE=twilio` the signature is always checked and the app logs a startup warning that the setting is ignored (analyze C1). Tunnelled testing does not need the bypass: point `PUBLIC_BASE_URL` at the tunnel and signatures validate. On failure: HTTP 403 and audit `webhook_rejected` (actor `twilio`, subject null, data `{route, reason, token_sha8}`), written in the threadpool.
+- **Tokens stay out of logs (analyze D1)**: uvicorn's access log would print `/twilio/<route>/<token>`. `security.install_access_log_redaction()` (called from `app/main.py`) adds a filter to the `uvicorn.access` logger that rewrites the path to `/twilio/<route>/…<sha8>`. Caddy's access log is off by default in spec 002's Caddyfile; T017 confirms it on the VM.
 - **Rationale**: behind Caddy the app sees `http://app:8000/...`, not the URL Twilio signed (§12.2). Fail closed (constitution III). The token itself is never logged.
 - **Alternatives**: reconstructing the URL from `X-Forwarded-*` headers (rejected: spoofable and not what §12.2 says).
 
@@ -27,8 +28,8 @@ No NEEDS CLARIFICATION remained after reading PLAN.md §12, the merged spec 005 
 
 ## R5. CallSid match and the "Answered" event
 
-- **Decision**: `tokens.match_call(ver, call_sid)` stores the incoming CallSid when none is stored (the first-fetch race) and returns False on a mismatch, in which case the route does not act (expiry TwiML; status 204). The voice route logs "Answered" by calling `pipeline.on_call_status(id, "in-progress")`, the same handler Twilio's `answered` status callback reaches. `pipeline.on_call_status` is changed to add a timeline event only when it advances the step, so the voice fetch and the status callback together write one "Answered".
-- **Rationale**: one code path for "answered"; no duplicate timeline rows in the dashboard stepper.
+- **Decision**: `tokens.match_call(ver, call_sid)` stores the incoming CallSid when none is stored (the first-fetch race) and returns False on a mismatch, in which case the route does not act (expiry TwiML; status 204). The voice route logs "Answered" by calling `pipeline.on_call_status(id, "in-progress")`, the same handler Twilio's `answered` status callback reaches. `pipeline.on_call_status` is changed so a progress status (queued/initiated/ringing/in-progress) writes its `call_status` audit row **and** its timeline event only when it advances the step, and `completed` audits and schedules the grace check only once per verification (a timeline "Call completed" marker makes a retry a no-op). So the voice fetch plus the status callback write one "Answered", and a retried status callback writes nothing (analyze I1, SC-004).
+- **Rationale**: one code path for "answered"; no duplicate timeline rows in the dashboard stepper and no extra audit rows on retries.
 
 ## R6. TwiML and scripts
 
@@ -53,6 +54,9 @@ No NEEDS CLARIFICATION remained after reading PLAN.md §12, the merged spec 005 
 | `on_last4` CONFIRMED | L4_OK + Hangup |
 | MISMATCH | L4_BAD + Hangup |
 | NO_INPUT | UNCLEAR + Hangup |
+
+- **Replays of the answer webhook (analyze U1)**: the first Gather's action carries the attempt it collects, `/twilio/answer/{token}?n=1` and, after a reprompt, `?n=2`; the query string is part of the signed URL. If `n` is at or below the verification's recorded `attempts`, the request is a replay: the route does not call the pipeline and re-renders the prompt for the current state (step `awaiting_last4` → the ASK_LAST4 gather; step `asked` after attempt 1 → the REPROMPT gather; otherwise the final replay of R4). So a Twilio retry can never be counted as the vendor's second answer.
+- The route's `for_final` replay is the one that produces TwiML; `pipeline._replay` (spec 005) only guards a race and is not rendered.
 
 ## R9. Placing and cancelling calls
 
