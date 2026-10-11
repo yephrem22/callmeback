@@ -111,8 +111,8 @@ Single Vite app in `web/` per plan.md; features by panel under `web/src/features
 
 ## Phase 5: Hand-off
 
-- [ ] T049 [P] Write `web/README.md` (≤ 60 lines): scripts, `VITE_API_MODE`, fixtures mode and the scenario player, URL parameters, the snapshot script, the gallery route, and the hand-off notes for spec 007 (where polling goes, which components read which `actions`).
-- [ ] T050 [P] Confirm `make test` runs the web checks now that `web/package.json` exists, and that `Dockerfile`'s web stage (`npm ci && npm run build`) succeeds with the committed `package-lock.json`.
+- [x] T049 [P] Write `web/README.md` (≤ 60 lines): scripts, `VITE_API_MODE`, fixtures mode and the scenario player, URL parameters, the snapshot script, the gallery route, and the hand-off notes for spec 007 (where polling goes, which components read which `actions`).
+- [x] T050 [P] Confirm `make test` runs the web checks now that `web/package.json` exists, and that `Dockerfile`'s web stage (`npm ci && npm run build`) succeeds with the committed `package-lock.json`.
 - [ ] T051 Rebase on `origin/main`, run `make test`, push, fast-forward `main`, remove the worktree (PLAN.md §0.8 step 6).
 
 ---
