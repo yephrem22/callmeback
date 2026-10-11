@@ -48,3 +48,20 @@ def demo_mode_off(tmp_path) -> Iterator[sqlite3.Connection]:
         conn.close()
         os.environ["DEMO_MODE"] = "1"
         config.reload()
+
+
+@pytest.fixture(autouse=True)
+def _agent_runtime_defaults():
+    """Every test starts with inline executors, no AI override, and a full rate-limit bucket (spec 005)."""
+    from app import ai_mode, executors
+    from app.agents import plugins
+
+    executors.use_inline_executors()
+    ai_mode.reset_override()
+    plugins.reset_bucket()
+    yield
+    ai_mode.reset_override()
+    executors.use_inline_executors()
+
+
+pytest_plugins = ["tests.fakes"]
