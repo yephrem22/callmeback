@@ -80,7 +80,7 @@ export function Layout({ route }: { route: Route }) {
         </main>
       </div>
 
-      {route.tab && <BottomTabs tab={route.tab} onClose={() => setQuery({ tab: null })} onReset={() => setLiveSelected(null)} />}
+      {route.tab && <BottomTabs tab={route.tab} onClose={() => setQuery({ tab: null })} onReset={() => setLiveSelected(null)} selected={detail ?? null} />}
 
       <nav className="flex h-11 items-center gap-1 border-t border-border px-2" aria-label="Tabs">
         {TABS.filter((t) => t.id !== "demo" || health?.demo_mode).map((t) => (

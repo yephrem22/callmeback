@@ -1,5 +1,5 @@
 // Candidate 9: audit chain list with an integrity seal and hash links. Evidence you can trust.
-import { Link2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Download, Link2, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import { formatChicago } from "@/lib/format";
 import type { AuditRow } from "@/lib/types";
@@ -46,13 +46,34 @@ export function AuditTable({ rows, chainOk = null, brokenAt = null, className }:
   );
 }
 
-/** Variant B: timeline with hash links between entries. */
-export function AuditTimeline({ rows, chainOk = null, brokenAt = null, className }: { rows: AuditRow[]; chainOk?: boolean | null; brokenAt?: number | null; className?: string }) {
+/** Downloads exactly the entries on screen plus the chain check, as JSON (spec 007 R7; no new endpoint). */
+function exportAudit(rows: AuditRow[], chainOk: boolean | null, brokenAt: number | null, name: string): void {
+  const body = JSON.stringify({ entries: rows, chain_ok: chainOk, broken_at: brokenAt }, null, 2);
+  const url = URL.createObjectURL(new Blob([body], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-${name}-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Variant B: timeline with hash links between entries. `exportName` adds the export link (P1). */
+export function AuditTimeline({ rows, chainOk = null, brokenAt = null, className, exportName }: {
+  rows: AuditRow[]; chainOk?: boolean | null; brokenAt?: number | null; className?: string; exportName?: string;
+}) {
   return (
     <div className={className}>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="font-medium">Audit trail</h3>
-        <ChainSeal ok={chainOk} count={rows.length} brokenAt={brokenAt} />
+        <span className="flex items-center gap-3">
+          <ChainSeal ok={chainOk} count={rows.length} brokenAt={brokenAt} />
+          {exportName && rows.length > 0 && (
+            <button type="button" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+                    onClick={() => exportAudit(rows, chainOk, brokenAt, exportName)}>
+              <Download className="size-4" aria-hidden /> Export JSON
+            </button>
+          )}
+        </span>
       </div>
       <ol className="space-y-0 text-sm">
         {rows.map((r, i) => (

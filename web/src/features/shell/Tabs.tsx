@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
+import { ChangeCases } from "@/features/devrev/ChangeCases";
 import { AuditTimeline } from "@/features/evidence/AuditList";
 import { KpiTiles } from "@/features/payments/KpiStrip";
 import { LedgerTable } from "@/features/payments/LedgerTable";
 import { BankHistoryCards } from "@/features/vendors/BankHistory";
-import { postAiMode, postReset, useAction, useAudit, useHealth, usePayments, useStats, useVendors } from "@/lib/api";
+import { postAiMode, postReset, postSimulate, useAction, useAudit, useHealth, usePayments, useStats, useVendors } from "@/lib/api";
+import type { InvoiceDetail } from "@/lib/types";
 import type { Tab } from "@/lib/route";
 import { useState } from "react";
 
@@ -46,19 +48,17 @@ function VendorsTab() {
 function AuditTab() {
   const { data } = useAudit();
   if (!data) return null;
-  return <AuditTimeline rows={data.entries} chainOk={data.chain_ok} brokenAt={data.broken_at} />;
+  return <AuditTimeline rows={data.entries} chainOk={data.chain_ok} brokenAt={data.broken_at} exportName="all" />;
 }
 
-function DevRevTab() {
-  return <p className="text-sm text-muted-foreground">No change cases yet. Cases opened from DevRev Computer appear here with their callback outcome.</p>;
-}
-
-function DemoTab({ onReset }: { onReset?: () => void }) {
+function DemoTab({ onReset, selected }: { onReset?: () => void; selected?: InvoiceDetail | null }) {
   const { data: health } = useHealth();
   const reset = useAction(postReset);
   const aiMode = useAction(postAiMode);
+  const simulate = useAction(postSimulate);
   const [confirm, setConfirm] = useState(false);
   const [last4, setLast4] = useState("4455");
+  const canSimulate = !!selected?.actions.can_simulate;
   return (
     <div className="flex flex-wrap items-center gap-6 text-sm">
       <Button variant="outline" onClick={() => setConfirm(true)}>Reset demo</Button>
@@ -66,10 +66,26 @@ function DemoTab({ onReset }: { onReset?: () => void }) {
         <Switch id="ai" checked={health?.ai_mode === "live"} onCheckedChange={(on) => aiMode.mutate([on ? "live" : "off"], { onSuccess: () => toast(on ? "AI live" : "AI off (rules only)") })} />
         <Label htmlFor="ai">AI live</Label>
       </div>
-      <div className="flex items-center gap-2">
-        <Label htmlFor="last4">Last four for simulated yes</Label>
-        <Input id="last4" className="mono w-20" maxLength={4} value={last4} onChange={(e) => setLast4(e.target.value.replace(/\D/g, ""))} />
-        <span className="text-muted-foreground">Simulate buttons appear on a case that is calling or retryable.</span>
+      {/* PLAN.md §19.2 backup plan: the phone didn't ring → answer for the vendor from here. */}
+      <div className="flex flex-wrap items-center gap-2" aria-label="Simulate the vendor's answer">
+        <Label htmlFor="last4">Last four for a yes</Label>
+        <Input id="last4" className="mono w-20" inputMode="numeric" maxLength={4} value={last4}
+               onChange={(e) => setLast4(e.target.value.replace(/\D/g, "").slice(0, 4))} />
+        {canSimulate && selected ? (
+          <>
+            <Button variant="outline" disabled={simulate.isPending}
+                    onClick={() => simulate.mutate([selected.id, "yes", last4 || null], { onSuccess: () => toast("Simulated: vendor said yes") })}>
+              Vendor says yes
+            </Button>
+            <Button variant="outline" disabled={simulate.isPending}
+                    onClick={() => simulate.mutate([selected.id, "no", null], { onSuccess: () => toast("Simulated: vendor said no") })}>
+              Vendor says no
+            </Button>
+            <span className="text-muted-foreground">for {selected.vendor?.name ?? selected.email.from_name} {selected.invoice_number ?? ""}</span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">Select a case that is calling, or a retryable hold, to simulate the vendor's answer.</span>
+        )}
       </div>
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent>
@@ -93,7 +109,9 @@ function DemoTab({ onReset }: { onReset?: () => void }) {
 
 const TITLES: Record<Exclude<Tab, null>, string> = { payments: "Payments", vendors: "Vendors", audit: "Audit log", devrev: "DevRev cases", demo: "Demo controls" };
 
-export function BottomTabs({ tab, onClose, onReset }: { tab: Exclude<Tab, null>; onClose: () => void; onReset?: () => void }) {
+export function BottomTabs({ tab, onClose, onReset, selected }: {
+  tab: Exclude<Tab, null>; onClose: () => void; onReset?: () => void; selected?: InvoiceDetail | null;
+}) {
   return (
     <section className="border-t border-border bg-card" aria-label={TITLES[tab]}>
       <div className="flex items-center justify-between px-4 pt-2">
@@ -104,8 +122,8 @@ export function BottomTabs({ tab, onClose, onReset }: { tab: Exclude<Tab, null>;
         {tab === "payments" && <PaymentsTab />}
         {tab === "vendors" && <VendorsTab />}
         {tab === "audit" && <AuditTab />}
-        {tab === "devrev" && <DevRevTab />}
-        {tab === "demo" && <DemoTab onReset={onReset} />}
+        {tab === "devrev" && <ChangeCases />}
+        {tab === "demo" && <DemoTab onReset={onReset} selected={selected} />}
       </ScrollArea>
     </section>
   );

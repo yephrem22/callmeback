@@ -1,10 +1,10 @@
 // Actions, shown according to `actions` (PLAN.md §7.6, §14.9). Buttons say what happens; no arrows; sentence case.
-import { Check, PhoneForwarded, ShieldBan, X } from "lucide-react";
+import { Check, PanelRightOpen, PhoneForwarded, ShieldBan, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { postRedteam, postRetryCallback, postReview, postSimulate, useAction } from "@/lib/api";
 import type { InvoiceDetail } from "@/lib/types";
 
@@ -43,12 +43,13 @@ export function Actions({ d, demoMode, onRedteam }: { d: InvoiceDetail; demoMode
       )}
       {a.can_redteam && (
         <Button variant="outline" className="ml-auto border-held text-held hover:bg-held-soft hover:text-held"
-                onClick={() => redteam.mutate([d.id], { onSuccess: (r) => { setResult(r); onRedteam?.(); } })} disabled={redteam.isPending}>
+                onClick={() => redteam.mutate([d.id], { onSuccess: (r) => setResult(r) })} disabled={redteam.isPending}>
           <ShieldBan className="size-4" aria-hidden /> Try to make the AI pay
         </Button>
       )}
 
-      <Dialog open={!!result} onOpenChange={(o) => { if (!o) setResult(null); }}>
+      {/* The verdict first; the trace sheet opens as the dialog closes (two modals at once hid the verdict). */}
+      <Dialog open={!!result} onOpenChange={(o) => { if (!o) { setResult(null); onRedteam?.(); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-held"><ShieldBan className="size-5" aria-hidden />{result?.blocked ? "Blocked" : "Not blocked"}</DialogTitle>
@@ -65,6 +66,11 @@ export function Actions({ d, demoMode, onRedteam }: { d: InvoiceDetail; demoMode
             </dl>
           )}
           <p className="text-sm text-muted-foreground">The AI explains; the code holds the keys. Release is enforced twice: by the plugin and again inside the ledger. The trace shows the blocked call.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setResult(null); onRedteam?.(); }}>
+              <PanelRightOpen className="size-4" aria-hidden /> Show the agent trace
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

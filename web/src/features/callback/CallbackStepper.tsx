@@ -1,5 +1,5 @@
 // Candidate 6: callback stepper. Dialing, Ringing, Answered, Asked, Answer, Verdict with live status icons.
-import { Check, Circle, Loader2, PhoneOutgoing } from "lucide-react";
+import { Check, Circle, FlaskConical, Loader2, PhoneOutgoing } from "lucide-react";
 
 import { formatChicago } from "@/lib/format";
 import type { Verification } from "@/lib/types";
@@ -23,7 +23,11 @@ function states(v: Verification) {
 
 export function SimulatedBadge({ source }: { source: Verification["source"] }) {
   if (source !== "simulated") return null;
-  return <span className="rounded-sm border border-review/50 bg-review-soft px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-review">Simulated</span>;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-sm border border-review/50 bg-review-soft px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-review">
+      <FlaskConical className="size-3" aria-hidden />Simulated
+    </span>
+  );
 }
 
 function Icon({ state }: { state: "done" | "active" | "todo" }) {

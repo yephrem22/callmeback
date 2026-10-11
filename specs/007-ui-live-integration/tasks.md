@@ -56,18 +56,18 @@ description: "Task list for spec 007: UI Live Integration"
 
 **Independent Test**: with the live dev setup, the fraud case → Demo controls → Vendor says no shows HELD with a SIMULATED badge; the red-team dialog names the layer and the trace opens; the DevRev tab lists a case created through `/internal` or a test insert; the audit export downloads JSON.
 
-- [ ] T009 [P] [US1] Edit `web/src/features/callback/CallbackPanel.tsx`: when `verification.source === "simulated"`, show a "SIMULATED" badge (review-tone outline, `FlaskConical` icon, uppercase, the gallery candidate's styling) next to the "Callback" heading. Never show it for `twilio` (FR-007).
-- [ ] T010 [US2] Edit `web/src/features/shell/Tabs.tsx` `DemoTab` (FR-017, §19.2 backup plan):
+- [x] T009 [P] [US1] Edit `web/src/features/callback/CallbackPanel.tsx`: when `verification.source === "simulated"`, show a "SIMULATED" badge (review-tone outline, `FlaskConical` icon, uppercase, the gallery candidate's styling) next to the "Callback" heading. Never show it for `twilio` (FR-007).
+- [x] T010 [US2] Edit `web/src/features/shell/Tabs.tsx` `DemoTab` (FR-017, §19.2 backup plan):
   - Accept the selected `InvoiceDetail | null`.
   - When `actions.can_simulate`, show "Vendor says yes" (using the tab's last-four input; digits only, 4 max) and "Vendor says no" for that invoice, with the toasts "Simulated: vendor said yes/no".
   - Otherwise show "Select a case that is calling, or a retryable hold, to simulate the vendor's answer."
   - Pass `detail` from `Layout` through `BottomTabs`.
-- [ ] T011 [P] [US3] Create `web/src/features/devrev/ChangeCases.tsx` and use it for the DevRev tab in `web/src/features/shell/Tabs.tsx` (FR-016, research R5):
+- [x] T011 [P] [US3] Create `web/src/features/devrev/ChangeCases.tsx` and use it for the DevRev tab in `web/src/features/shell/Tabs.tsx` (FR-016, research R5):
   - **List** from `useChangeCases()`: account name, requested change in words, status as a word plus icon, sender, created time.
   - **Detail** for the selected row (the first by default) from `useChangeCase(id)`: request excerpt, signals as short labels, the callback timeline and final label, a SIMULATED badge when `verification.source === "simulated"`, and the note "sandbox: routed to the team demo line".
   - **Empty list**: keep the existing copy.
-- [ ] T012 [P] [US2] Edit `web/src/features/evidence/AuditList.tsx`: add an "Export JSON" link to the chain header that downloads `{entries, chain_ok, broken_at}` as `audit-<subject or "all">-<YYYY-MM-DD>.json` through a Blob URL (FR-015, research R7). Keep "Chain verified" only when `chain_ok`; otherwise name `broken_at`.
-- [ ] T013 [US3] Verify against live data and fix within spec 004's design:
+- [x] T012 [P] [US2] Edit `web/src/features/evidence/AuditList.tsx`: add an "Export JSON" link to the chain header that downloads `{entries, chain_ok, broken_at}` as `audit-<subject or "all">-<YYYY-MM-DD>.json` through a Blob URL (FR-015, research R7). Keep "Chain verified" only when `chain_ok`; otherwise name `broken_at`.
+- [x] T013 [US3] Verify against live data and fix within spec 004's design:
   - The red-team dialog states the layer ("the Strands payment-guard plugin" / "the ledger's own policy check" / "the agent refused") and the API reason.
   - The trace sheet opens automatically (`onRedteam` → `setQuery({ trace: 1 })`), and a `guard_block` row renders in the held color.
   - The Payments tab shows the KPI strip and the ledger with masked destinations and the ACH effective date.
