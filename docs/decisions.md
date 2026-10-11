@@ -74,3 +74,12 @@ Record answers to the PLAN.md §2 and §22 questions here as they arrive, plus a
 - Dashboard on live data (vite dev, `VITE_API_MODE=live`, light and dark): no console errors, no failing API calls.
 - **For spec 007 (UI)**: the held line renders the call time in 24-hour form ("said no on the 20:46 call", from `web/src/lib/decide.ts` `lastEventTime`) while the rest of the UI uses 12-hour times ("Fri 4:52 PM"). The ledger's blocked-reason text (`_chicago_hhmm`) is also 24-hour; align both.
 - `snap.mjs` drives the fixture scenario player, which live mode does not use; the live check used a scratch Playwright script instead. Spec 007 may want a `--live` mode in `snap.mjs`.
+
+## Spec 006 live calls (T017, 2026-10-11, on the VM)
+
+- Deploy: VM fast-forwarded to `1799c30` with a git bundle over SSH (the VM's clone uses Sahaj's forwarded GitHub key); `VOICE_MODE=twilio`, `TWILIO_VALIDATE_SIGNATURE=1`, `AI_MODE=off`; vendors re-seeded so every `phone_on_file` is the testing phone (…7223); DB backed up first (`data/app.0243.db`). `probe_edge.sh`: all routes OK, unsigned `POST /twilio/status/<random>` → 403.
+- **Fraud, spoken "no"**: CALLING 0.5 s → ringing 1.5 s → answered 8.1 s → answer at 34.5 s → HELD(DENIED_BY_VENDOR) in the same poll. Twilio's speech-to-text heard "No, we never change times." (confidence 0.73) and the classifier still said NO ("no", "never"): fail closed on imperfect speech.
+- **Heartland, keypad 1 + 4455#**: ringing 2.0 s → answered 8.1 s → 1 at 34.0 s → last four matched at 44.7 s → CONFIRMED → RELEASED to ••••4455; vendor master Gateway National Bank ••••4455.
+- **No answer**: ringing 2.1 s → HELD(NO_ANSWER) at 25.9 s (the 25 s ring timeout); Retry offered.
+- After the three calls: 3 calls placed, 1 payment ($4,120), $97,500 held, audit chain OK, no errors in the app log. `Polly.Joanna-Neural` played fine; no fallback needed.
+- **Bug found live, fixed**: the voice fetch and Twilio's own `answered` callback arrive together, and both wrote "Answered" plus a `call_status` audit row; the timeline append itself was a non-atomic read-modify-write that could drop events. `pipeline.on_call_status` now checks and writes in one transaction, and `verifications.add_event` appends inside one. Regression tests: `tests/test_voice_concurrency.py` (reproduced 4×, 3× and 4 lost events before the fix).

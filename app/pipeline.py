@@ -496,20 +496,26 @@ def on_call_status(verification_id: str, call_status: str) -> None:
     ver = _load_active(verification_id)
     if ver is None:
         return
-    if call_status in PROGRESS:
-        label, step = PROGRESS[call_status]
-        if STEP_ORDER.index(step) <= STEP_ORDER.index(ver["step"]):
-            return
-    elif call_status == "completed" and any(e.get("label") == CALL_COMPLETED for e in ver.get("events") or []):
-        return
     c = db.connect()
     try:
-        audit.append(ver["subject_id"], _actor(ver), "call_status", {**_sim(ver), "status": call_status}, conn=c)
-        if call_status in PROGRESS:
-            verifications.add_event(c, verification_id, label, step=step)
-            return
-        if call_status == "completed":
-            verifications.add_event(c, verification_id, CALL_COMPLETED)
+        # the check and the write share one write transaction: Twilio's voice fetch and its own
+        # 'answered' callback arrive together, and only one of them may record it (found live, T017)
+        with db.tx(c):
+            cur = repo.get_verification(c, verification_id)
+            if cur is None or cur.get("final_label") is not None:
+                return
+            if call_status in PROGRESS:
+                label, step = PROGRESS[call_status]
+                if STEP_ORDER.index(step) <= STEP_ORDER.index(cur["step"]):
+                    return
+            elif call_status == "completed" and any(e.get("label") == CALL_COMPLETED for e in cur.get("events") or []):
+                return
+            audit.append(ver["subject_id"], _actor(ver), "call_status", {**_sim(ver), "status": call_status}, conn=c)
+            if call_status in PROGRESS:
+                verifications.add_event(c, verification_id, label, step=step)
+                return
+            if call_status == "completed":
+                verifications.add_event(c, verification_id, CALL_COMPLETED)
     finally:
         c.close()
     if call_status in ("busy", "no-answer", "failed", "canceled"):

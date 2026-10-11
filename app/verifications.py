@@ -38,13 +38,16 @@ def create(conn: sqlite3.Connection, subject_id: str, *, kind: str = "invoice", 
 
 def add_event(conn: sqlite3.Connection, ver_id: str, label: str, detail: str = "",
               step: str | None = None) -> None:
-    ver = repo.get_verification(conn, ver_id)
-    events = list(ver.get("events") or [])
-    events.append({"ts": now_iso(), "label": label, "detail": detail})
-    cols = {"events": events}
-    if step:
-        cols["step"] = step
-    repo.update_verification(conn, ver_id, **cols)
+    """Append a timeline event. The read-modify-write of the JSON list runs inside one write
+    transaction (or the caller's), so concurrent webhooks never lose each other's events."""
+    with db.tx(conn) if not conn.in_transaction else _noop():
+        ver = repo.get_verification(conn, ver_id)
+        events = list(ver.get("events") or [])
+        events.append({"ts": now_iso(), "label": label, "detail": detail})
+        cols = {"events": events}
+        if step:
+            cols["step"] = step
+        repo.update_verification(conn, ver_id, **cols)
 
 
 def record_answer(conn: sqlite3.Connection, ver_id: str, *, digits: str | None = None,
