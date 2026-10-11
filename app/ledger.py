@@ -52,9 +52,9 @@ def _chicago_hhmm(ts: str | None) -> str:
 
 def _held_reason_text(inv: dict, ver: dict | None) -> str:
     reason = inv.get("hold_reason")
-    when = _chicago_hhmm((ver or {}).get("updated_at")) if ver else None
+    when = _chicago_hhmm(ver.get("updated_at")) if ver and ver.get("updated_at") else None
     texts = {
-        "DENIED_BY_VENDOR": f"vendor denied the change on the {when} call",
+        "DENIED_BY_VENDOR": f"vendor denied the change on the {when} call" if when else "vendor denied the change on the callback",
         "UNCLEAR_ANSWER": "the vendor's answer was unclear",
         "NO_ANSWER": "the vendor did not answer the call",
         "LAST4_MISMATCH": "the last four digits did not match the requested account",

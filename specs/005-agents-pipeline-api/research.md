@@ -66,7 +66,8 @@ Verified by introspection (`inspect.signature`, dataclass fields, source):
 
 ## R9. Direct tool calls and the guard
 
-- **Open question, settled in phase 2 by a test**: whether `BeforeToolCallEvent` hooks fire for `agent.tool.release_payment()` in 1.59.0 (`record_direct_tool_call` exists on `Agent`). Either way the ledger raises `PolicyViolation`, so the red-team result reports `layer: "ledger"` if the plugin did not fire. The test asserts the layer actually observed and that no payment exists.
+- **Settled in phase 2 (`tests/test_redteam.py`)**: yes, Strands 1.59.0 runs `BeforeToolCallEvent` hooks for direct `agent.tool.release_payment()` calls, so the direct attempt is blocked by the plugin itself (layer `plugin`), and the ledger re-check is the second lock behind it.
+- **Original question**: whether `BeforeToolCallEvent` hooks fire for `agent.tool.release_payment()` in 1.59.0 (`record_direct_tool_call` exists on `Agent`). Either way the ledger raises `PolicyViolation`, so the red-team result reports `layer: "ledger"` if the plugin did not fire. The test asserts the layer actually observed and that no payment exists.
 
 ## R10. Runtime AI mode
 
