@@ -67,6 +67,8 @@ class FixtureStore {
     return s ? stepDetail(s, this.currentStep[s]) : null;
   }
   detailFor(s: ScenarioName): InvoiceDetail { return stepDetail(s, this.currentStep[s]); }
+  /** A specific step regardless of player state (used by the gallery). */
+  at(s: ScenarioName, step: number): InvoiceDetail { return stepDetail(s, step); }
 
   listRows(): InvoiceListRow[] {
     const base = listJson as InvoiceListRow[];

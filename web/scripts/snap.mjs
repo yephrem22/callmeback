@@ -46,13 +46,31 @@ async function shoot(url, file, { fullPage = false, reducedMotion = false } = {}
 }
 
 try {
-  if (has("--shell") || (!has("--gallery") && !has("--steps"))) {
+  if (has("--shell") || (!has("--gallery") && !has("--cards") && !has("--steps"))) {
     for (const theme of themes) await shoot(`${base}/?scenario=none&theme=${theme}`, `shell-empty-${theme}.png`);
   }
   if (has("--gallery")) {
     for (const theme of themes) await shoot(`${base}/gallery?theme=${theme}`, `gallery-${theme}.png`, { fullPage: true });
   }
-  if (!has("--gallery") && !has("--shell")) {
+  if (has("--cards")) {
+    // One screenshot per candidate card, at a 1100px-wide viewport, light theme (and dark with --cards-dark).
+    const cardThemes = has("--cards-dark") ? themes : ["light"];
+    for (const theme of cardThemes) {
+      const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 }, deviceScaleFactor: 1 });
+      const page = await ctx.newPage();
+      await page.goto(`${base}/gallery?theme=${theme}`, { waitUntil: "networkidle" });
+      await page.waitForSelector('body[data-ready="true"]');
+      const cards = await page.$$("article[id^='c']");
+      for (const card of cards) {
+        const id = await card.getAttribute("id");
+        await card.screenshot({ path: path.join(out, `card-${id}-${theme}.png`) });
+        shots += 1;
+        process.stdout.write(`  card-${id}-${theme}.png\n`);
+      }
+      await ctx.close();
+    }
+  }
+  if (!has("--gallery") && !has("--shell") && !has("--cards")) {
     for (const [scenario, steps] of Object.entries(index)) {
       for (let i = 0; i < steps.length; i++) {
         const n = String(i + 1).padStart(2, "0");
