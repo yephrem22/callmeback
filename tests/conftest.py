@@ -68,4 +68,4 @@ def _agent_runtime_defaults(monkeypatch):
     executors.use_inline_executors()
 
 
-pytest_plugins = ["tests.fakes"]
+pytest_plugins = ["tests.fakes", "tests.twilio_helpers"]

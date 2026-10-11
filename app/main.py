@@ -1,7 +1,7 @@
 """FastAPI application entry point (PLAN.md §6: mounts routers, serves web/dist).
 
 Minimal skeleton created by spec 002 (cloud-infra) so the VM answers /healthz;
-spec 005 (Builder A) adds the §7.6 routers here. Keep /healthz unauthenticated
+spec 005 adds the §7.6 routers and spec 006 the /twilio/* webhooks. Keep /healthz unauthenticated
 (Caddy routes it without basic auth) and mount the static dashboard last.
 """
 from __future__ import annotations
@@ -12,7 +12,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app import api, logging_setup
-from app.config import S
+from app.voice import routes as voice_routes
+from app.voice import security as voice_security
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WEB_DIST = REPO_ROOT / "web" / "dist"
@@ -31,14 +32,11 @@ def healthz() -> dict:
 app.include_router(api.router)
 
 
-# Builder B's throwaway Twilio spike (spec 002 milestone B2, DEMO_MODE only); spec 006 removes it.
-if S.demo_mode:
-    try:
-        from app.voice.spike import router as spike_router
-    except ImportError:
-        spike_router = None
-    if spike_router is not None:
-        app.include_router(spike_router)
+# The Twilio webhooks (spec 006, PLAN.md §12.2–§12.3), in both voice modes. Caddy routes
+# /twilio/* without basic auth; every request is authenticated by its signature and token.
+app.include_router(voice_routes.router)
+voice_security.install_access_log_redaction()        # tokens never reach the access log (analyze D1)
+voice_security.warn_if_insecure()
 
 # Static dashboard, mounted after every router so /api/* and /twilio/* win (PLAN.md §14.5).
 if (WEB_DIST / "index.html").is_file():
