@@ -1,5 +1,6 @@
 import { Cpu, Database, HardDrive, Monitor, Moon, Phone, Sparkles, Sun } from "lucide-react";
 
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -40,12 +41,14 @@ export function Header() {
 
   return (
     <header className="flex h-14 items-center gap-4 whitespace-nowrap border-b border-border px-4">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-lg font-semibold tracking-tight">Call Me Back</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="self-center"><Logo /></h1>
         {/* Visible from 1024 px: 1280×720 at 125% zoom is the stage (§14.10, §19.1 "Running on Akamai Cloud"). */}
-        <span className="hidden max-w-[13rem] truncate text-sm text-muted-foreground lg:inline xl:max-w-none"
+        {/* 1024–1279 px: "Running on Akamai Cloud" (the label before its comma); 1280+: the full label. */}
+        <span className="hidden whitespace-nowrap text-sm text-muted-foreground lg:inline"
               title={h?.deploy_label ? `Running on ${h.deploy_label}` : undefined}>
-          Running on {h?.deploy_label ?? "…"}
+          Running on <span className="xl:hidden">{h?.deploy_label?.split(",")[0] ?? "…"}</span>
+          <span className="hidden xl:inline">{h?.deploy_label ?? "…"}</span>
         </span>
       </div>
 
