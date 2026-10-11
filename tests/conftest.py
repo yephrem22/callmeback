@@ -60,6 +60,7 @@ def _agent_runtime_defaults():
     ai_mode.reset_override()
     plugins.reset_bucket()
     yield
+    executors.wait_idle(15.0)            # no background thread may outlive its test (it would write to the next DB)
     ai_mode.reset_override()
     executors.use_inline_executors()
 

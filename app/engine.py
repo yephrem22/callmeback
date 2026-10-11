@@ -10,7 +10,7 @@ from pathlib import Path
 from app import audit, config, db, repo
 from app.ids import new_id
 from app.intake import eml, merge, regex_extract
-from app.models import RiskResult
+from app.models import InvoiceExtraction, RiskResult
 from app.policy import engine as policy
 from app.state import HoldReason, Status, transition
 
@@ -56,10 +56,15 @@ def _ingest(raw: bytes, *, source: str, sample_name: str | None, conn: sqlite3.C
             c.close()
 
 
-def score_invoice(invoice_id: str, parsed: eml.ParsedEmail, conn: sqlite3.Connection) -> RiskResult:
-    """Extract (text only), resolve, score and route. Idempotent for a RECEIVED invoice."""
+def score_invoice(invoice_id: str, parsed: eml.ParsedEmail, conn: sqlite3.Connection, *,
+                  llm: InvoiceExtraction | None = None, llm_status: str = "fallback") -> RiskResult:
+    """Extract, resolve, score and route. Idempotent for a RECEIVED invoice.
+
+    Spec 005 (analyze A2): the fast path passes llm_status="pending" (Intake still running); the slow
+    path passes the Intake result as `llm`. Defaults keep spec 003's text-only behaviour.
+    """
     rx = regex_extract.extract(parsed.body_text)
-    extraction = merge.merge(rx, None, parsed.body_text, parsed.from_name, llm_status="fallback")
+    extraction = merge.merge(rx, llm, parsed.body_text, parsed.from_name, llm_status=llm_status)
     mismatch = merge.has_mismatch(extraction, rx)
 
     with db.tx(conn):

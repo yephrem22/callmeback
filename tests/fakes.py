@@ -153,3 +153,22 @@ def fake_model(monkeypatch):
         return m
 
     return _install
+
+
+# max_tokens each agent asks for (PLAN.md §11.4), so a factory can tell the agents apart.
+INTAKE, ANALYST, VERIFIER, PAYMENTS = 800, 900, 200, 500
+
+
+@pytest.fixture
+def fake_models(monkeypatch):
+    """Use as: fake_models({INTAKE: lambda: ScriptedModel([...]), PAYMENTS: ...}).
+    Each agent gets a *fresh* model from its factory every time it is built."""
+    from app.agents import model as model_factory
+
+    def _install(factories: dict[int, Any]) -> None:
+        def make(max_tokens: int = 1200, **_: Any) -> ScriptedModel:
+            f = factories.get(max_tokens)
+            return f() if f else ScriptedModel([text_turn("Done.")])
+        monkeypatch.setattr(model_factory, "make_model", make)
+
+    return _install

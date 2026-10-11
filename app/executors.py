@@ -11,6 +11,7 @@ import `JOBS`/`AGENTS` once: the objects stay the same, only their backend chang
 from __future__ import annotations
 
 import threading
+import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, Callable
 
@@ -36,9 +37,23 @@ class _SwitchableExecutor:
         self.workers = workers
         self._lock = threading.Lock()
         self._backend: Any = ThreadPoolExecutor(max_workers=workers, thread_name_prefix=name)
+        self._pending: set[Future] = set()
 
     def submit(self, fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Future:
-        return self._backend.submit(fn, *args, **kwargs)
+        fut = self._backend.submit(fn, *args, **kwargs)
+        if not fut.done():
+            with self._lock:
+                self._pending.add(fut)
+            fut.add_done_callback(self._forget)
+        return fut
+
+    def _forget(self, fut: Future) -> None:
+        with self._lock:
+            self._pending.discard(fut)
+
+    def busy(self) -> int:
+        with self._lock:
+            return len(self._pending)
 
     def use_inline(self) -> None:
         with self._lock:
@@ -74,3 +89,13 @@ def use_thread_executors() -> None:
 
 def on_agents_thread() -> bool:
     return threading.current_thread().name.startswith(AGENTS.name)
+
+
+def wait_idle(timeout: float = 10.0) -> bool:
+    """Wait until neither pool has work in flight (tests use it so no thread outlives its test)."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if JOBS.busy() == 0 and AGENTS.busy() == 0:
+            return True
+        time.sleep(0.02)
+    return False
