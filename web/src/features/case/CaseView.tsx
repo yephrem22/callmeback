@@ -1,9 +1,8 @@
 // The case, in the PLAN.md §14.2 order: decision, why (risk + destination), then the rest is rendered by siblings.
 // Winners (docs/design/decisions.md): 12A stamp, 2A meter + 1B breakdown, 4A lookalike, 5B destination, 3A amount chart.
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
-import { AmountVsHistoryChart } from "@/features/case/AmountVsHistory";
 import { DestinationColumns } from "@/features/case/DestinationCard";
 import { LookalikeStack } from "@/features/case/LookalikeDiff";
 import { FlagList, RiskBreakdownBar } from "@/features/case/RiskBreakdown";
@@ -12,6 +11,9 @@ import { Stamp } from "@/features/case/Stamp";
 import { decisionSentence, stampFor } from "@/lib/decide";
 import { formatCents, formatChicago } from "@/lib/format";
 import type { InvoiceDetail } from "@/lib/types";
+
+// Recharts is only needed for this one chart on the case screen, so it loads as its own chunk on demand.
+const AmountVsHistoryChart = lazy(() => import("@/features/case/AmountVsHistory").then((m) => ({ default: m.AmountVsHistoryChart })));
 
 /** Animate the stamp only when the decision changes, not on every poll. */
 function useStampAnimation(key: string | null) {
@@ -79,7 +81,9 @@ export function CaseView({ d }: { d: InvoiceDetail }) {
       {d.vendor && d.vendor.history.length > 0 && d.amount_cents != null && (
         <div className="space-y-1">
           <h3 className="text-sm font-medium text-muted-foreground">Amount against this vendor's history</h3>
-          <AmountVsHistoryChart detail={d} />
+          <Suspense fallback={<div className="h-20 rounded-md bg-muted/40" aria-hidden />}>
+            <AmountVsHistoryChart detail={d} />
+          </Suspense>
         </div>
       )}
     </section>

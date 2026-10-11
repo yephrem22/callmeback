@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 const ICON = { PAID: CheckCircle2, HELD: OctagonX, REVIEW: Hourglass, CALLING: PhoneCall } as const;
 
 const TONE = {
-  paid: { outline: "border-paid text-paid", filled: "bg-paid text-white border-paid" },
-  held: { outline: "border-held text-held", filled: "bg-held text-white border-held" },
-  review: { outline: "border-review text-review", filled: "bg-review text-white border-review" },
+  paid: { outline: "border-paid text-paid", filled: "bg-paid text-background border-paid" },
+  held: { outline: "border-held text-held", filled: "bg-held text-background border-held" },
+  review: { outline: "border-review text-review", filled: "bg-review text-background border-review" },
 } as const;
 
 export function Stamp({ kind, variant = "outline", size = "lg", animate = true, className }: {

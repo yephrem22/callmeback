@@ -35,6 +35,28 @@ Reviewed `web/snapshots/gallery-*.png` and per-card captures at 1100 px. Top thr
 2. **Amount-vs-history dots stacked on one spot** because the six past amounts sit within a few percent of the median. Fixed: small vertical jitter in both variants so each dot stays visible; the median line and the highlighted invoice are unaffected.
 3. **Long code snippets clipped under the Copy button**. Fixed: snippets wrap.
 
+## Self-critique: P2 polish (phase 4, 2026-10-10)
+
+Measured, not eyeballed: `npm run contrast` (WCAG relative luminance over the tokens in `src/index.css`) and `npm run verify` (Playwright: theme default, persistence and override; j/k/Enter; focus ring; reduced motion).
+
+Contrast results (both themes, against page and card backgrounds):
+
+| Check | Light | Dark |
+|---|---|---|
+| Body text (`foreground`) | 14.7:1 | 14.5:1 / 13.2:1 on card |
+| Secondary text (`muted-foreground`) | 6.6:1 | 8.6:1 |
+| Status text: paid / review / held / ai | 5.0 / 5.0 / 6.1 / 6.3 | 7.9 / 8.3 / 6.3 / 7.0 |
+| Status text on its soft chip background | 4.6 to 5.5 | 5.3 to 6.4 |
+| Labels on filled status colors | 5.4 to 6.6 | 6.3 to 8.3 |
+
+Top three issues and fixes:
+
+1. **White labels on filled status colors failed in dark mode** (2.1:1 to 2.8:1), because the dark palette lightens the status colors. Fixed: labels on filled status surfaces (the CSS breakdown segments, the chart labels, the filled stamp variant) use the page background color instead of white, which is dark navy in dark mode and paper in light. Both themes now pass.
+2. **Keyboard focus had no roving index**, so Tab walked every row and j/k did nothing. Fixed: one tab stop in the queue (the selected or last-focused row), j/k and the arrow keys move it with a visible 2 px ledger ring, Enter opens, Home/End jump, and shortcuts are ignored while typing in an input. Verified by script.
+3. **The derived focus index was first written as an effect that set state**, which the linter flagged as a cascading render. Fixed by deriving it during render from the user's last keyboard position or the selected row.
+
+Token values are unchanged from `contracts/design-tokens.md`; no dark-theme hex needed adjustment. The decorative rule color (`border`) sits at 1.3:1 to 1.5:1 by design; it is a divider, not a component boundary, so it is reported but not gated.
+
 ## Self-critique: prototype P1 (phase 3, 2026-10-10)
 
 Reviewed all 14 scenario steps in both themes at 1024×576 (`web/snapshots/*.png`). Top three issues and fixes:

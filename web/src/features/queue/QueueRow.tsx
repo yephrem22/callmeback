@@ -26,7 +26,7 @@ function StatusLabel({ row, className }: { row: InvoiceListRow; className?: stri
 /** Variant A: two lines, vendor and amount above, status and age below. */
 export function QueueRowStacked({ row, selected, onSelect, now, className, tabIndex = 0 }: Props) {
   return (
-    <button type="button" onClick={onSelect} tabIndex={tabIndex} aria-current={selected ? "true" : undefined}
+    <button type="button" onClick={onSelect} tabIndex={tabIndex} aria-current={selected ? "true" : undefined} data-row data-id={row.id}
             className={cn("w-full rounded-md border px-3 py-2 text-left transition-colors", selected ? "border-primary bg-accent" : "border-transparent hover:bg-accent/60", className)}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="truncate font-medium">{row.vendor_name ?? "Unknown sender"}</span>

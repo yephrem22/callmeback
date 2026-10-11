@@ -43,7 +43,7 @@ export function RiskBreakdownChart({ risk, className }: { risk: Risk; className?
           <ReferenceLine x={50} stroke="var(--muted-foreground)" strokeDasharray="3 3" label={{ value: "50", position: "top", fontSize: 11, fill: "var(--muted-foreground)" }} />
           {weighted.map((f, i) => (
             <Bar key={f.code} dataKey={f.code} stackId="a" fill={colorFor(i)} radius={i === weighted.length - 1 ? [0, 4, 4, 0] : 0} isAnimationActive={false}>
-              <LabelList dataKey={f.code} position="center" fill="#fff" fontSize={12} formatter={(v: unknown) => (typeof v === "number" && v >= 15 ? `+${v}` : "")} />
+              <LabelList dataKey={f.code} position="center" fill="var(--background)" fontSize={12} formatter={(v: unknown) => (typeof v === "number" && v >= 15 ? `+${v}` : "")} />
             </Bar>
           ))}
         </BarChart>
@@ -62,7 +62,7 @@ export function RiskBreakdownBar({ risk, className, collapsible = false }: { ris
       <div className="relative h-7 w-full overflow-hidden rounded-md bg-muted" role="img" aria-label={`${risk.points} risk points`}>
         <div className="flex h-full">
           {weighted.map((f, i) => (
-            <div key={f.code} className="flex h-full items-center justify-center text-xs font-medium text-white"
+            <div key={f.code} className="flex h-full items-center justify-center text-xs font-medium text-background"
                  style={{ width: `${(f.points / max) * 100}%`, background: colorFor(i) }} title={`${f.title}: +${f.points}`}>
               {f.points / max > 0.12 ? `+${f.points}` : ""}
             </div>
