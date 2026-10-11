@@ -122,6 +122,20 @@ def test_completed_while_verifying_does_not_hold(client, db, twilio_env, no_grac
     assert _inv(db, iid)["status"] == "VERIFYING"
 
 
+@pytest.mark.parametrize("before_hangup", ["answered", "awaiting_last4"])
+def test_hang_up_before_answering_holds_unclear(client, db, twilio_env, no_grace, before_hangup):
+    """US1/AC7: 'completed' while the step is at or before awaiting_last4 → HELD(UNCLEAR_ANSWER)."""
+    iid = calling("03_heartland_bank_change")
+    tok = twilio_env.last_token
+    post(client, f"/twilio/voice/{tok}")                                      # step answered
+    if before_hangup == "awaiting_last4":
+        _answer(client, tok, Digits="1")
+    assert latest(db, iid)["step"] == before_hangup
+    assert post(client, f"/twilio/status/{tok}", {"CallStatus": "completed"}).status_code == 204
+    assert (_inv(db, iid)["status"], _inv(db, iid)["hold_reason"]) == ("HELD", "UNCLEAR_ANSWER")
+    assert latest(db, iid)["final_label"] == "UNCLEAR"
+
+
 def test_spoken_yes_with_ai_off_is_held(client, db, twilio_env):
     iid = calling("03_heartland_bank_change")
     tok = twilio_env.last_token

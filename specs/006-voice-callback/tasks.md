@@ -128,3 +128,10 @@ T006 app/voice/tokens.py         T007 app/voice/security.py
 - `app/voice/` holds no §12.5 decision logic; if a test needs a decision changed, the change belongs in `app/pipeline.py` and spec 005's tests must stay green.
 - Tests never call the network: the Twilio `Client` is faked and signatures are computed locally.
 - Never log or store a raw token; audit data carries `token_sha8` only.
+
+---
+
+## Phase 6: Convergence
+
+- [x] T021 Add a `tests/test_voice_flow.py` row: an answered call that hangs up before answering Q1 (status `completed` while the step is `answered`, `pipeline.COMPLETED_GRACE_S = 0`) ends HELD(UNCLEAR_ANSWER), and one that hangs up while `awaiting_last4` does too, per US1/AC7 (partial)
+- [x] T022 Add `tests/twilio_helpers.py` (signing helper, fake Twilio account fixture) to the Project Structure tree in `specs/006-voice-callback/plan.md`, per plan: Project Structure (partial)

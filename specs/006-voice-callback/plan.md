@@ -70,7 +70,8 @@ tests/
 ├── test_twiml.py            # scripts verbatim, gather settings, amount wording
 ├── test_twilio_security.py  # signature pass/403, expired token, superseded, CallSid (PLAN.md §17.1)
 ├── test_voice_flow.py       # every §17.1 voice-flow row through the routes and simulate_answer
-└── test_twilio_client.py    # place_call parameters, cancel never raises (Client faked)
+├── test_twilio_client.py    # place_call parameters, cancel never raises (Client faked)
+└── twilio_helpers.py        # signing helper (RequestValidator.compute_signature), fake Twilio account fixture
 
 removed: app/voice/spike.py, tests/test_voice_spike.py, scripts/twilio_spike.py
 ```
